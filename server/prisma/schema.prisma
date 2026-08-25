@@ -1,0 +1,1163 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  MODERATOR
+  ADMIN
+  /**
+   * Represents a company representative rather than a contributor.
+   */
+  COMPANY
+}
+
+/**
+ * Who is speaking in an issue thread; drives the "official" styling.
+ */
+enum ReplyAuthorRole {
+  CONTRIBUTOR
+  COMPANY
+  MODERATOR
+}
+
+enum ClaimStatus {
+  UNCLAIMED
+  PENDING
+  CLAIMED
+}
+
+enum CompanyStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+enum VerificationStatus {
+  UNVERIFIED
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum AvailabilityStatus {
+  HIGH
+  MODERATE
+  LOW
+  NO_TASKS
+}
+
+enum PaymentModel {
+  HOURLY
+  PER_TASK
+  MILESTONE
+  MIXED
+}
+
+enum RateUnit {
+  HOURLY
+  PER_TASK
+  MILESTONE
+}
+
+enum DiscussionCategory {
+  GENERAL
+  PAY
+  TASK_AVAILABILITY
+  ONBOARDING
+  REVIEWERS
+  SUPPORT
+  SKILLS
+  PLATFORM
+}
+
+enum ComplaintCategory {
+  PAYMENT
+  REVIEWER_DISPUTE
+  PROJECT_REMOVAL
+  ACCOUNT_SUSPENSION
+  SUPPORT
+  RATE_CHANGE
+  UNPAID_ONBOARDING
+  GUIDELINES
+  TASK_AVAILABILITY
+  REIMBURSEMENT
+  THROTTLE_TASK_LIMIT
+  PLATFORM_ERROR
+  OTHER
+}
+
+enum ComplaintStatus {
+  SUBMITTED
+  VERIFIED
+  PUBLISHED
+  COMPANY_RESPONDED
+  RESOLUTION_PENDING
+  RESOLVED
+  PARTIALLY_RESOLVED
+  UNRESOLVED
+}
+
+enum VoteTargetType {
+  DISCUSSION
+  COMMENT
+  REVIEW
+}
+
+enum IdentityMode {
+  ANONYMOUS
+  USERNAME
+}
+
+enum ContributionImpactType {
+  SUBMISSION
+  VERIFICATION
+  COMMUNITY_ENGAGEMENT
+  MODERATION
+  ADJUSTMENT
+}
+
+enum ContributionSourceType {
+  REVIEW
+  PAY_REPORT
+  TASK_AVAILABILITY_REPORT
+  DISCUSSION
+  COMMENT
+  COMPLAINT
+  OTHER
+}
+
+enum SignalScopeType {
+  GLOBAL
+  COMPANY
+  DOMAIN
+  SKILL
+  COUNTRY
+  COMPANY_DOMAIN
+  COMPANY_SKILL
+  COMPANY_COUNTRY
+  DOMAIN_COUNTRY
+  SKILL_COUNTRY
+  CUSTOM
+}
+
+enum MarketSignalType {
+  TASK_AVAILABILITY
+  PAY_RATE
+  TASK_SCORE
+  REVIEW_VOLUME
+  WORKER_SENTIMENT
+}
+
+enum TaskWatchType {
+  TASK_AVAILABILITY
+  PAY_RATE
+  TASK_SCORE
+  MARKET_SIGNAL
+}
+
+enum NotificationType {
+  WATCH_TRIGGERED
+  CONTRIBUTION_UPDATE
+  SYSTEM
+}
+
+enum EmailDeliveryState {
+  NOT_REQUESTED
+  PENDING
+  SENT
+  FAILED
+  SUPPRESSED
+}
+
+enum TenureBucket {
+  LESS_THAN_1_MONTH
+  ONE_TO_THREE_MONTHS
+  THREE_TO_SIX_MONTHS
+  SIX_TO_TWELVE_MONTHS
+  ONE_TO_TWO_YEARS
+  TWO_PLUS_YEARS
+}
+
+/**
+ * Who can see a profile field. AGGREGATE_ONLY is private to the account but
+ * may be used in anonymized community statistics.
+ */
+enum FieldVisibility {
+  PRIVATE
+  PUBLIC
+  AGGREGATE_ONLY
+}
+
+enum BadgeType {
+  FOUNDING_TASKER
+}
+
+enum SkillProficiency {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  EXPERT
+}
+
+enum LanguageProficiency {
+  BASIC
+  CONVERSATIONAL
+  PROFESSIONAL
+  NATIVE
+}
+
+enum LookingStatus {
+  READY
+  OPEN_TO_OFFERS
+  NOT_LOOKING
+}
+
+enum WorkloadBucket {
+  UNDER_10
+  TEN_TO_TWENTY
+  TWENTY_TO_THIRTY
+  THIRTY_TO_FORTY
+  FORTY_PLUS
+}
+
+enum StartTiming {
+  IMMEDIATELY
+  WITHIN_1_WEEK
+  WITHIN_2_WEEKS
+  WITHIN_1_MONTH
+  EXPLORING
+}
+
+enum OpportunityStatus {
+  ACTIVE
+  PAUSED
+  CLOSED
+  EXPIRED
+  UNKNOWN
+}
+
+enum OpportunitySourceType {
+  ADMIN
+  PUBLIC_LISTING
+  COMPANY_SUBMITTED
+  COMMUNITY_REPORTED
+}
+
+enum OpportunityRemoteType {
+  REMOTE
+  HYBRID
+  ONSITE
+}
+
+enum ApplicationJourneyStatus {
+  SAVED
+  APPLIED
+  SCREENING
+  QUALIFIED
+  MATCHED
+  WORKING
+  REJECTED
+  WITHDRAWN
+}
+
+enum TipModerationStatus {
+  PENDING
+  PUBLISHED
+  REJECTED
+}
+
+model User {
+  id                    String    @id @default(cuid())
+  email                 String    @unique
+  username              String    @unique
+  displayName           String?
+  passwordHash          String
+  country               String?
+  countryCode           String?
+  timezone              String?
+  publicProfileEnabled  Boolean   @default(false)
+  role                  Role      @default(USER)
+  contributionScore     Int       @default(0)
+  trustLevel            Int       @default(0)
+  onboardingStartedAt   DateTime?
+  onboardingCompletedAt DateTime?
+  onboardingVersion     Int?
+  activatedAt           DateTime?
+  lastLoginAt           DateTime?
+  lastSeenAt            DateTime?
+  lastLoginIp           String?
+  lastLoginCountry      String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  experiences         WorkerExperience[]
+  reviews             Review[]
+  discussions         Discussion[]
+  comments            Comment[]
+  votes               Vote[]
+  payReports          PayReport[]
+  availabilityReports TaskAvailabilityReport[]
+  complaints          Complaint[]
+  researchOptIn       ResearchPanelOptIn?
+  companyMemberships  CompanyMember[]
+  complaintReplies    ComplaintReply[]
+  contributionImpacts ContributionImpact[]
+  taskWatches         TaskWatch[]
+  notifications       Notification[]
+  domains             UserDomain[]
+  skills              UserSkill[]
+  languages           UserLanguage[]
+  workPreference      UserWorkPreference?
+  onboardingProgress  OnboardingProgress?
+  profileVisibility   ProfileVisibility?
+  badges              UserBadge[]
+  analyticsEvents     AnalyticsEvent[]
+  savedOpportunities  SavedOpportunity[]
+  opportunityStatuses UserOpportunityStatus[]
+  matchSnapshots      MatchSnapshot[]
+  applicationTips     ApplicationTip[]
+  screeningReports    ScreeningReport[]
+  visits              Visit[]
+
+  @@index([countryCode, createdAt])
+  @@index([onboardingCompletedAt])
+  @@index([lastLoginAt])
+  @@index([createdAt])
+}
+
+/**
+ * Links a user account to a company they are authorised to speak for. Presence of
+ * an APPROVED row is what lets someone post an official reply on that company's issues.
+ */
+model CompanyMember {
+  id        String   @id @default(cuid())
+  userId    String
+  companyId String
+  /**
+   * Job title shown next to official replies, e.g. "Contributor Support Lead".
+   */
+  title     String?
+  approved  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, companyId])
+  @@index([companyId, approved])
+}
+
+model Company {
+  id            String        @id @default(cuid())
+  slug          String        @unique
+  name          String
+  description   String        @default("")
+  website       String?
+  logoUrl       String?
+  headquarters  String?
+  country       String?
+  companyStatus CompanyStatus @default(ACTIVE)
+  claimStatus   ClaimStatus   @default(UNCLAIMED)
+  claimedAt     DateTime?
+  isDemo        Boolean       @default(false)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  experiences         WorkerExperience[]
+  reviews             Review[]
+  discussions         Discussion[]
+  payReports          PayReport[]
+  availabilityReports TaskAvailabilityReport[]
+  complaints          Complaint[]
+  scoreSnapshots      CompanyScoreSnapshot[]
+  members             CompanyMember[]
+  contributionImpacts ContributionImpact[]
+  marketSignals       MarketSignalSnapshot[]
+  taskWatches         TaskWatch[]
+  notifications       Notification[]
+  opportunities       Opportunity[]
+  applicationGuide    CompanyApplicationGuide?
+
+  @@index([name])
+  @@index([claimStatus])
+}
+
+model Domain {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String   @unique
+  description String   @default("")
+  createdAt   DateTime @default(now())
+
+  skills              Skill[]
+  experiences         WorkerExperience[]
+  reviews             Review[]
+  discussions         Discussion[]
+  payReports          PayReport[]
+  availabilityReports TaskAvailabilityReport[]
+  userDomains         UserDomain[]
+  opportunityDomains  OpportunityDomain[]
+}
+
+model Skill {
+  id            String   @id @default(cuid())
+  slug          String   @unique
+  name          String   @unique
+  description   String   @default("")
+  domainId      String?
+  domain        Domain?  @relation(fields: [domainId], references: [id])
+  userSuggested Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  experienceSkills   ExperienceSkill[]
+  reviewSkills       ReviewSkill[]
+  discussions        Discussion[]
+  payReportSkills    PayReportSkill[]
+  availabilitySkills AvailabilitySkill[]
+  userSkills         UserSkill[]
+  opportunitySkills  OpportunitySkill[]
+}
+
+model WorkerExperience {
+  id                 String             @id @default(cuid())
+  userId             String
+  companyId          String
+  domainId           String?
+  country            String?
+  countryCode        String?
+  startMonth         DateTime?
+  endMonth           DateTime?
+  currentlyActive    Boolean            @default(false)
+  tenureBucket       TenureBucket?
+  workModel          String?
+  verificationStatus VerificationStatus @default(UNVERIFIED)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  user    User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  domain  Domain?           @relation(fields: [domainId], references: [id])
+  skills  ExperienceSkill[]
+  reviews Review[]
+
+  @@unique([userId, companyId])
+  @@index([companyId])
+  @@index([userId])
+  @@index([currentlyActive, companyId])
+  @@index([countryCode, domainId, createdAt], map: "WorkerExperience_country_domain_created_idx")
+}
+
+model ExperienceSkill {
+  experienceId String
+  skillId      String
+
+  experience WorkerExperience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+  skill      Skill            @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([experienceId, skillId])
+}
+
+model Review {
+  id                 String             @id @default(cuid())
+  companyId          String
+  userId             String?
+  experienceId       String?
+  domainId           String?
+  country            String?
+  countryCode        String?
+  currentlyActive    Boolean?
+  startMonth         DateTime?
+  endMonth           DateTime?
+  overallExperience  Int
+  paySatisfaction    Int
+  paymentReliability Int
+  taskAvailability   Int
+  projectStability   Int
+  reviewerFairness   Int
+  guidelineClarity   Int
+  supportQuality     Int
+  transparency       Int
+  flexibility        Int?
+  wouldWorkAgain     Boolean
+  title              String
+  body               String
+  identityMode       IdentityMode       @default(ANONYMOUS)
+  displayName        String?
+  verificationStatus VerificationStatus @default(UNVERIFIED)
+  isDemo             Boolean            @default(false)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  company             Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user                User?                @relation(fields: [userId], references: [id], onDelete: SetNull)
+  experience          WorkerExperience?    @relation(fields: [experienceId], references: [id], onDelete: SetNull)
+  domain              Domain?              @relation(fields: [domainId], references: [id])
+  skills              ReviewSkill[]
+  contributionImpacts ContributionImpact[]
+
+  @@index([companyId, createdAt])
+  @@index([domainId])
+  @@index([countryCode, domainId, createdAt])
+}
+
+model ReviewSkill {
+  reviewId String
+  skillId  String
+
+  review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  skill  Skill  @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([reviewId, skillId])
+}
+
+model CompanyScoreSnapshot {
+  id                 String   @id @default(cuid())
+  companyId          String
+  period             String
+  taskScore          Float
+  pay                Float?
+  paymentReliability Float?
+  taskAvailability   Float?
+  projectStability   Float?
+  reviewerFairness   Float?
+  guidelineClarity   Float?
+  supportQuality     Float?
+  transparency       Float?
+  wouldWorkAgainRate Float?
+  sampleSize         Int
+  verifiedPct        Float
+  computedAt         DateTime @default(now())
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, period])
+  @@index([taskScore])
+}
+
+model Discussion {
+  id        String             @id @default(cuid())
+  title     String
+  body      String
+  category  DiscussionCategory @default(GENERAL)
+  authorId  String?
+  companyId String?
+  domainId  String?
+  skillId   String?
+  status    String             @default("published")
+  isDemo    Boolean            @default(false)
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  author   User?     @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  company  Company?  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  domain   Domain?   @relation(fields: [domainId], references: [id])
+  skill    Skill?    @relation(fields: [skillId], references: [id])
+  comments Comment[]
+
+  @@index([companyId, createdAt])
+  @@index([createdAt])
+}
+
+model Comment {
+  id           String   @id @default(cuid())
+  discussionId String
+  authorId     String?
+  body         String
+  parentId     String?
+  isDemo       Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  discussion Discussion @relation(fields: [discussionId], references: [id], onDelete: Cascade)
+  author     User?      @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  parent     Comment?   @relation("CommentThread", fields: [parentId], references: [id])
+  replies    Comment[]  @relation("CommentThread")
+
+  @@index([discussionId, createdAt])
+}
+
+model Vote {
+  id         String         @id @default(cuid())
+  userId     String
+  targetType VoteTargetType
+  targetId   String
+  value      Int
+  createdAt  DateTime       @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, targetType, targetId])
+  @@index([targetType, targetId])
+}
+
+model PayReport {
+  id                 String             @id @default(cuid())
+  companyId          String
+  userId             String?
+  domainId           String?
+  country            String?
+  countryCode        String?
+  advertisedRate     Float?
+  advertisedRateUnit RateUnit?
+  effectiveRate      Float?
+  currency           String             @default("USD")
+  paymentModel       PaymentModel       @default(HOURLY)
+  periodStart        DateTime?
+  periodEnd          DateTime?
+  verificationStatus VerificationStatus @default(UNVERIFIED)
+  isDemo             Boolean            @default(false)
+  createdAt          DateTime           @default(now())
+
+  company             Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user                User?                @relation(fields: [userId], references: [id], onDelete: SetNull)
+  domain              Domain?              @relation(fields: [domainId], references: [id])
+  skills              PayReportSkill[]
+  contributionImpacts ContributionImpact[]
+
+  @@index([companyId, createdAt])
+  @@index([countryCode, domainId, createdAt])
+}
+
+model PayReportSkill {
+  payReportId String
+  skillId     String
+
+  payReport PayReport @relation(fields: [payReportId], references: [id], onDelete: Cascade)
+  skill     Skill     @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([payReportId, skillId])
+}
+
+model TaskAvailabilityReport {
+  id                 String             @id @default(cuid())
+  companyId          String
+  userId             String?
+  domainId           String?
+  country            String?
+  countryCode        String?
+  reportDate         DateTime           @default(now())
+  availabilityStatus AvailabilityStatus
+  verificationStatus VerificationStatus @default(UNVERIFIED)
+  isDemo             Boolean            @default(false)
+  createdAt          DateTime           @default(now())
+
+  company             Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user                User?                @relation(fields: [userId], references: [id], onDelete: SetNull)
+  domain              Domain?              @relation(fields: [domainId], references: [id])
+  skills              AvailabilitySkill[]
+  contributionImpacts ContributionImpact[]
+
+  @@index([companyId, reportDate])
+  @@index([reportDate])
+  @@index([countryCode, domainId, createdAt], map: "TaskAvailabilityReport_country_domain_created_idx")
+}
+
+model AvailabilitySkill {
+  reportId String
+  skillId  String
+
+  report TaskAvailabilityReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  skill  Skill                  @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([reportId, skillId])
+}
+
+model Complaint {
+  id                     String             @id @default(cuid())
+  publicId               String             @unique
+  companyId              String
+  userId                 String?
+  category               ComplaintCategory
+  title                  String
+  body                   String
+  desiredOutcome         String?
+  verificationStatus     VerificationStatus @default(UNVERIFIED)
+  publicIdentityMode     IdentityMode       @default(ANONYMOUS)
+  status                 ComplaintStatus    @default(SUBMITTED)
+  resolutionStatus       String?
+  resolutionSatisfaction Int?
+  isDemo                 Boolean            @default(false)
+  submittedAt            DateTime           @default(now())
+  resolvedAt             DateTime?
+  updatedAt              DateTime           @updatedAt
+
+  company Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user    User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
+  replies ComplaintReply[]
+
+  @@index([companyId, submittedAt])
+  @@index([status])
+}
+
+/**
+ * Public conversation on an issue between the reporter, the company, and moderators.
+ */
+model ComplaintReply {
+  id          String          @id @default(cuid())
+  complaintId String
+  authorId    String?
+  authorRole  ReplyAuthorRole
+  /**
+   * Title snapshot so a rep's role stays accurate on old replies.
+   */
+  authorTitle String?
+  body        String
+  isDemo      Boolean         @default(false)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  complaint Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  author    User?     @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  @@index([complaintId, createdAt])
+}
+
+model ResearchPanelOptIn {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  optedIn   Boolean  @default(true)
+  domains   String[]
+  skills    String[]
+  countries String[]
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ContributionImpact {
+  id                       String                 @id @default(cuid())
+  userId                   String
+  companyId                String?
+  impactType               ContributionImpactType
+  sourceType               ContributionSourceType
+  sourceId                 String
+  points                   Int                    @default(0)
+  reason                   String?
+  beforeSnapshot           Json?
+  afterSnapshot            Json?
+  metadata                 Json?
+  reviewId                 String?
+  payReportId              String?
+  taskAvailabilityReportId String?
+  createdAt                DateTime               @default(now())
+
+  user                   User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company                Company?                @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  review                 Review?                 @relation(fields: [reviewId], references: [id], onDelete: SetNull)
+  payReport              PayReport?              @relation(fields: [payReportId], references: [id], onDelete: SetNull)
+  taskAvailabilityReport TaskAvailabilityReport? @relation(fields: [taskAvailabilityReportId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, impactType, sourceType, sourceId], map: "ContributionImpact_source_dedupe_key")
+  @@index([sourceType, sourceId])
+  @@index([companyId, createdAt])
+  @@index([userId, createdAt])
+}
+
+model MarketSignalSnapshot {
+  id          String           @id @default(cuid())
+  companyId   String?
+  signalType  MarketSignalType
+  scopeType   SignalScopeType
+  scopeKey    String
+  targetType  String
+  targetKey   String
+  value       Float?
+  sampleSize  Int              @default(0)
+  payload     Json?
+  periodStart DateTime?
+  periodEnd   DateTime?
+  createdAt   DateTime         @default(now())
+
+  company Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([signalType, scopeType, scopeKey, targetType, targetKey, periodEnd], map: "MarketSignalSnapshot_scope_target_period_key")
+  @@index([scopeType, scopeKey, signalType, createdAt], map: "MarketSignalSnapshot_scope_signal_created_idx")
+  @@index([targetType, targetKey, createdAt])
+  @@index([companyId, createdAt])
+}
+
+model TaskWatch {
+  id          String          @id @default(cuid())
+  userId      String
+  companyId   String?
+  watchType   TaskWatchType
+  scopeType   SignalScopeType
+  scopeKey    String
+  targetType  String
+  targetKey   String
+  enabled     Boolean         @default(true)
+  notifyInApp Boolean         @default(true)
+  notifyEmail Boolean         @default(true)
+  settings    Json?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company       Company?       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  notifications Notification[]
+
+  @@unique([userId, watchType, scopeType, scopeKey, targetType, targetKey], map: "TaskWatch_owner_scope_target_key")
+  @@index([scopeType, scopeKey, enabled])
+  @@index([targetType, targetKey, enabled])
+  @@index([companyId, enabled])
+}
+
+model Notification {
+  id                 String             @id @default(cuid())
+  userId             String
+  companyId          String?
+  taskWatchId        String?
+  type               NotificationType
+  title              String
+  body               String
+  payload            Json?
+  dedupeKey          String             @unique
+  readAt             DateTime?
+  emailDeliveryState EmailDeliveryState @default(NOT_REQUESTED)
+  emailAttempts      Int                @default(0)
+  emailLastAttemptAt DateTime?
+  emailDeliveredAt   DateTime?
+  createdAt          DateTime           @default(now())
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company   Company?   @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  taskWatch TaskWatch? @relation(fields: [taskWatchId], references: [id], onDelete: SetNull)
+
+  @@index([userId, readAt, createdAt])
+  @@index([emailDeliveryState, emailAttempts, createdAt], map: "Notification_email_delivery_queue_idx")
+  @@index([taskWatchId, createdAt])
+}
+
+model UserDomain {
+  userId   String
+  domainId String
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  domain Domain @relation(fields: [domainId], references: [id], onDelete: Cascade)
+
+  @@id([userId, domainId])
+}
+
+model UserSkill {
+  userId      String
+  skillId     String
+  proficiency SkillProficiency?
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skill Skill @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([userId, skillId])
+}
+
+model OnboardingProgress {
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  version         Int       @default(1)
+  currentStep     String    @default("welcome")
+  skippedSections String[]  @default([])
+  startedAt       DateTime?
+  completedAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ProfileVisibility {
+  userId             String          @id
+  country            FieldVisibility @default(AGGREGATE_ONLY)
+  domains            FieldVisibility @default(AGGREGATE_ONLY)
+  skills             FieldVisibility @default(AGGREGATE_ONLY)
+  companyExperience  FieldVisibility @default(AGGREGATE_ONLY)
+  updatedAt          DateTime        @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UserBadge {
+  id        String    @id @default(cuid())
+  userId    String
+  type      BadgeType
+  awardedAt DateTime  @default(now())
+  metadata  Json?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type])
+  @@index([type])
+}
+
+model PlatformSetting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}
+
+model AnalyticsEvent {
+  id          String   @id @default(cuid())
+  userId      String?
+  name        String
+  properties  Json?
+  createdAt   DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([name, createdAt])
+  @@index([userId, createdAt])
+}
+
+/**
+ * First-party page views for operator insights. Not public.
+ * Approximate city/country only — not GPS.
+ */
+model Visit {
+  id          String   @id @default(cuid())
+  sessionId   String
+  userId      String?
+  path        String
+  referrer    String?
+  ip          String
+  country     String?
+  countryCode String?
+  region      String?
+  city        String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([sessionId, createdAt])
+  @@index([ip, createdAt])
+  @@index([path, createdAt])
+  @@index([countryCode])
+  @@index([userId, createdAt])
+}
+
+model GeoCache {
+  ip          String   @id
+  country     String?
+  countryCode String?
+  region      String?
+  city        String?
+  updatedAt   DateTime @updatedAt
+}
+
+model UserLanguage {
+  userId      String
+  code        String
+  proficiency LanguageProficiency @default(PROFESSIONAL)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, code])
+}
+
+/**
+ * Private TaskMatch preferences. Never public by default.
+ */
+model UserWorkPreference {
+  userId                      String         @id
+  lookingStatus               LookingStatus?
+  workload                    WorkloadBucket?
+  startTiming                 StartTiming?
+  professionalExperienceYears Float?
+  aiWorkExperienceYears       Float?
+  desiredRate                 Float?
+  desiredRateCurrency         String         @default("USD")
+  desiredRateUnit             RateUnit?
+  paymentModelPreference      PaymentModel?
+  linkedinUrl                 String?
+  githubUrl                   String?
+  portfolioUrl                String?
+  resumeUrl                   String?
+  summary                     String?
+  openToRecruiterContact      Boolean        @default(false)
+  updatedAt                   DateTime       @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Opportunity {
+  id                       String                 @id @default(cuid())
+  companyId                String
+  title                    String
+  slug                     String                 @unique
+  description              String                 @default("")
+  status                   OpportunityStatus      @default(ACTIVE)
+  sourceType               OpportunitySourceType  @default(ADMIN)
+  sourceUrl                String?
+  countryRestrictions      String[]               @default([])
+  remoteType               OpportunityRemoteType  @default(REMOTE)
+  paymentModel             PaymentModel           @default(HOURLY)
+  currency                 String                 @default("USD")
+  minRate                  Float?
+  maxRate                  Float?
+  rateUnit                 RateUnit               @default(HOURLY)
+  weeklyHoursMin           Int?
+  weeklyHoursMax           Int?
+  experienceYearsMin       Float?
+  experienceYearsPreferred Float?
+  languageRequirements     String[]               @default([])
+  applicationUrl           String?
+  applicationProcess       Json?
+  screeningType            String?
+  estimatedProcessMinutes  Int?
+  screeningDifficulty      Int?
+  isDemo                   Boolean                @default(false)
+  featured                 Boolean                @default(false)
+  publishedAt              DateTime?
+  expiresAt                DateTime?
+  lastVerifiedAt           DateTime?
+  createdAt                DateTime               @default(now())
+  updatedAt                DateTime               @updatedAt
+
+  company    Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  skills     OpportunitySkill[]
+  domains    OpportunityDomain[]
+  languages  OpportunityLanguage[]
+  savedBy    SavedOpportunity[]
+  statuses   UserOpportunityStatus[]
+  snapshots  MatchSnapshot[]
+  tips       ApplicationTip[]
+  screening  ScreeningReport[]
+
+  @@index([companyId, status])
+  @@index([status, lastVerifiedAt])
+  @@index([featured, status])
+}
+
+model OpportunitySkill {
+  opportunityId String
+  skillId       String
+  required      Boolean          @default(true)
+  preferredLevel SkillProficiency?
+
+  opportunity Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  skill       Skill       @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([opportunityId, skillId])
+}
+
+model OpportunityDomain {
+  opportunityId String
+  domainId      String
+
+  opportunity Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  domain      Domain      @relation(fields: [domainId], references: [id], onDelete: Cascade)
+
+  @@id([opportunityId, domainId])
+}
+
+model OpportunityLanguage {
+  opportunityId String
+  code          String
+  required      Boolean @default(true)
+
+  opportunity Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+
+  @@id([opportunityId, code])
+}
+
+model SavedOpportunity {
+  userId        String
+  opportunityId String
+  createdAt     DateTime @default(now())
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  opportunity Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+
+  @@id([userId, opportunityId])
+}
+
+model UserOpportunityStatus {
+  id            String                   @id @default(cuid())
+  userId        String
+  opportunityId String
+  status        ApplicationJourneyStatus
+  note          String?
+  createdAt     DateTime                 @default(now())
+  updatedAt     DateTime                 @updatedAt
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  opportunity Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, opportunityId])
+  @@index([userId, status])
+}
+
+model MatchSnapshot {
+  id                      String   @id @default(cuid())
+  userId                  String
+  opportunityId           String
+  candidateMatchScore     Int
+  opportunityQualityScore Int?
+  confidence              String
+  recommendation          String
+  components              Json
+  createdAt               DateTime @default(now())
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  opportunity Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([opportunityId, createdAt])
+}
+
+model CompanyApplicationGuide {
+  companyId               String   @id
+  steps                   Json
+  estimatedTime           String?
+  difficulty              Int?
+  officialSourceUrl       String?
+  officialSummary         String?
+  communitySummary        String?
+  updatedAt               DateTime @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+}
+
+model ApplicationTip {
+  id            String              @id @default(cuid())
+  userId        String?
+  opportunityId String?
+  companyId     String?
+  body          String
+  status        TipModerationStatus @default(PENDING)
+  flaggedReason String?
+  isDemo        Boolean             @default(false)
+  createdAt     DateTime            @default(now())
+
+  user        User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  opportunity Opportunity? @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+
+  @@index([opportunityId, status])
+  @@index([companyId, status])
+}
+
+model ScreeningReport {
+  id                 String   @id @default(cuid())
+  userId             String?
+  opportunityId      String?
+  companyId          String?
+  difficulty         Int
+  durationBucket     String
+  passed             Boolean?
+  isDemo             Boolean  @default(false)
+  createdAt          DateTime @default(now())
+
+  user        User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  opportunity Opportunity? @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
+
+  @@index([companyId, createdAt])
+  @@index([opportunityId, createdAt])
+}

@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+@theme {
+  /* Fonts */
+  --font-sans: "Geist", -apple-system, BlinkMacSystemFont, sans-serif;
+
+  --color-primary: #6d28d9;
+  --color-primary-hover: #5b21b6;
+  --color-primary-light: #f3e8ff;
+
+  /* Background */
+  --color-bg: #fafafa;
+  --color-surface: #ffffff;
+  --color-card: #ffffff;
+
+  /* Text */
+  --color-text-primary: #1f1f1f;
+  --color-text-secondary: #71717a;
+  --color-text-muted: #a1a1aa;
+  --color-text-white: #ffffff;
+
+  /* Border */
+  --color-border: #e5e7eb;
+  --color-divider: #f3f4f6;
+
+  /* Input */
+  --color-input-bg: #ffffff;
+  --color-input-border: #d4d4d8;
+  --color-placeholder: #9ca3af;
+
+  /* Buttons */
+  --color-button-primary: #6d28d9;
+  --color-button-primary-hover: #5b21b6;
+  --color-button-dark: #2d2d2d;
+
+  /* Rating */
+  --color-star: #fbbf24;
+  --color-star-empty: #e5e7eb;
+
+  /* Status */
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+
+  /* Shadow */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+/* Base Styles */
+body {
+  background-color: var(--color-bg-base);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

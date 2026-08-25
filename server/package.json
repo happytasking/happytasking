@@ -1,0 +1,46 @@
+{
+  "name": "happy-tasking-server",
+  "version": "1.0.0",
+  "description": "Happy Tasking API",
+  "license": "ISC",
+  "type": "module",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "db:migrate": "prisma migrate dev",
+    "db:generate": "prisma generate",
+    "db:seed": "tsx prisma/seed.ts",
+    "test": "tsx src/services/taskScore.service.test.ts && tsx src/services/trends.service.test.ts && tsx src/lib/stars.test.ts && tsx src/lib/taskmatch.test.ts"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.0",
+    "bcrypt": "^6.0.0",
+    "cookie": "^2.0.1",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.6.2",
+    "jsonwebtoken": "^9.0.3",
+    "multer": "^2.2.0",
+    "slugify": "^1.6.9",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/cookie-parser": "^1.4.10",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/multer": "^2.1.0",
+    "@types/node": "^26.0.1",
+    "prisma": "^6.19.0",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3"
+  }
+}
