@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: mailto:security@happytasking.com
+    about: Private reports only. Do not file a public issue. See SECURITY.md.
+  - name: Privacy for contributors
+    url: https://happytasking.com/privacy-for-contributors
+    about: What belongs in a public report — share your experience, not confidential work.
+  - name: Live community
+    url: https://happytasking.com/community
+    about: Product discussions that are not a software bug or repo feature request.

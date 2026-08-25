@@ -117,10 +117,9 @@
 - Configurable TaskScore engine + unit tests
 - Next.js web app (`web/`) with home, directory, company pages, review form, community, market, issues, auth
 - DEMO seed data (companies, reviews, pulse, pay, discussions, issues)
-- Migration plan documented in `MIGRATION_PLAN.md`
 
 ### Changed
-- Product identity from Review&RATE → Happy Tasking
+- Product identity established as Happy Tasking
 - Canonical frontend is Next.js (`web/`); Vite `client/` retained as legacy scaffold only
 - Persistence migrated from MongoDB/Mongoose → PostgreSQL/Prisma
 

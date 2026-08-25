@@ -340,22 +340,7 @@ async function main() {
     },
   });
 
-  // Triage account: the workflow banner promises moderator review, so the demo
-  // data needs someone who can actually perform it.
-  await prisma.user.create({
-    data: {
-      email: "moderator@happytasking.com",
-      username: "ht_moderator",
-      displayName: "HT Moderation",
-      passwordHash,
-      role: "MODERATOR",
-      country: "United States",
-      countryCode: "US",
-      contributionScore: 400,
-      trustLevel: 4,
-      ...onboarded,
-    },
-  });
+  await maybeCreateLocalModerator();
 
   const contributorNames = [
     { username: "alex_k", displayName: "Alex K.", country: "United States" },
@@ -1066,9 +1051,11 @@ async function main() {
   await seedTaskMatch(prisma);
 
   console.log("Seed complete.");
-  console.log("Contributor login: demo@happytasking.com / password123");
   console.log(
-    `Company logins (password123): ${[...claimedSlugs.keys()]
+    "Contributor login (local DEMO only): demo@happytasking.com / password123",
+  );
+  console.log(
+    `Company logins (local DEMO only, password123): ${[...claimedSlugs.keys()]
       .map((s) => `team@${s}.demo`)
       .join(", ")}`,
   );
@@ -1080,6 +1067,50 @@ async function main() {
 
 function iNoise(slug: string) {
   return slug.split("").reduce((s, ch) => s + ch.charCodeAt(0), 0);
+}
+
+/**
+ * Privileged accounts are never created with a password that lives in git.
+ * Set SEED_MODERATOR_PASSWORD in the local environment when you need Insights
+ * or issue triage. Do not set this in production. Do not use the public demo
+ * password.
+ */
+async function maybeCreateLocalModerator() {
+  const password = process.env.SEED_MODERATOR_PASSWORD?.trim() ?? "";
+  if (!password) {
+    console.log(
+      "Moderator account: skipped. Set SEED_MODERATOR_PASSWORD (16+ chars, not the demo password) to create a local-only moderator@happytasking.com.",
+    );
+    return;
+  }
+  if (password.length < 16) {
+    throw new Error(
+      "SEED_MODERATOR_PASSWORD must be at least 16 characters. Refusing to create a privileged account with a short secret.",
+    );
+  }
+  if (password === "password123") {
+    throw new Error(
+      "SEED_MODERATOR_PASSWORD cannot be the public DEMO contributor password.",
+    );
+  }
+  const moderatorHash = await bcrypt.hash(password, 12);
+  await prisma.user.create({
+    data: {
+      email: "moderator@happytasking.com",
+      username: "ht_moderator",
+      displayName: "HT Moderation",
+      passwordHash: moderatorHash,
+      role: "MODERATOR",
+      country: "United States",
+      countryCode: "US",
+      contributionScore: 400,
+      trustLevel: 4,
+      ...onboarded,
+    },
+  });
+  console.log(
+    "Moderator account: moderator@happytasking.com (password taken from SEED_MODERATOR_PASSWORD, not printed).",
+  );
 }
 
 main()

@@ -61,7 +61,18 @@ Thumbs.db
 *.swp
 *.swo
 
-# Internal planning (product strategy and agent prompts — not for a public repo)
+# Internal planning (product strategy, agent prompts, completed migration diary)
 prd.md
 cursor-master-prompt.md
 instructions.md
+MIGRATION_PLAN.md
+
+# Local tooling / secrets managers
+.envrc
+.direnv/
+.cursor/
+.claude/
+
+# OS junk
+ehthumbs.db
+Desktop.ini

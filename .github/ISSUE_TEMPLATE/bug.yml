@@ -1,0 +1,84 @@
+name: Bug
+description: A reproducible software problem in Happy Tasking (web app, API, or local setup).
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping keep Happy Tasking reliable.
+
+        **DO NOT INCLUDE CONFIDENTIAL PROJECT INFORMATION, TASK CONTENT, INTERNAL GUIDELINES, PRIVATE CLIENT INFORMATION, OR PERSONAL DATA.**
+
+        Share your experience of the *product*, not confidential work. Invent dummy text if you need to show a form. Redact emails, IPs, session cookies, and other people’s identities from logs and screenshots.
+
+        Vulnerabilities: email `security@happytasking.com` — do not use this form. See [SECURITY.md](https://github.com/happytasking/happytasking/blob/main/SECURITY.md).
+  - type: checkboxes
+    id: confidentiality
+    attributes:
+      label: Confidentiality
+      options:
+        - label: I confirm this report does **not** include confidential project information, task content, internal guidelines, private client information, or personal data.
+          required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What did you see? What did you expect?
+      placeholder: Example — Opening /taskmatch while logged in shows a blank dual-score panel instead of the empty state.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Prefer a local instance (`web/` + `server/`). Do not paste production cookies.
+      placeholder: |
+        1. Seed a local database (`npm run db:seed` in server/).
+        2. Log in as demo@happytasking.com.
+        3. Open http://localhost:3000/taskmatch
+        4. …
+    validations:
+      required: true
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Surface
+      options:
+        - Web (web/)
+        - API (server/)
+        - Local setup / Prisma / seed
+        - Unsure
+    validations:
+      required: true
+  - type: input
+    id: route
+    attributes:
+      label: Route or API path
+      description: For example `/companies/outlier` or `GET /api/v1/taskmatch`.
+      placeholder: /market
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Environment
+      options:
+        - Local development
+        - https://happytasking.com (production)
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: environment-notes
+    attributes:
+      label: Environment notes
+      description: Browser, Node version, OS. No production secrets.
+      placeholder: Firefox 129, Node 20, Ubuntu 24.04
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Screenshots or logs
+      description: Attach only redacted material. If a screenshot would show a real task, do not attach it.
+  - type: markdown
+    attributes:
+      value: |
+        Reminder: **DO NOT INCLUDE CONFIDENTIAL PROJECT INFORMATION, TASK CONTENT, INTERNAL GUIDELINES, PRIVATE CLIENT INFORMATION, OR PERSONAL DATA.**

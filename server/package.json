@@ -2,7 +2,7 @@
   "name": "happy-tasking-server",
   "version": "1.0.0",
   "description": "Happy Tasking API",
-  "license": "ISC",
+  "license": "Apache-2.0",
   "type": "module",
   "main": "dist/server.js",
   "scripts": {

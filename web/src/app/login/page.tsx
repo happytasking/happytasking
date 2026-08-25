@@ -104,7 +104,7 @@ export default function LoginPage() {
             {submitting ? "Signing in…" : "Log in"}
           </button>
           <p className="hint text-center">
-            Demo: demo@happytasking.com / password123
+            Demo (local seed): demo@happytasking.com / password123
           </p>
         </form>
 

@@ -1,0 +1,73 @@
+name: Data correction
+description: Report inaccurate public company or opportunity data (name, website, slug, listing metadata).
+title: "[Data]: "
+labels: ["data"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for **public** directory mistakes: wrong company website, stale description, duplicate slug, TaskMatch listing title that does not match a public page, missing logo, and similar.
+
+        This is not for “my TaskScore is too low” (that is methodology — use Feature) and not for confidential disputes (do not paste internal emails).
+
+        **DO NOT INCLUDE CONFIDENTIAL PROJECT INFORMATION, TASK CONTENT, INTERNAL GUIDELINES, PRIVATE CLIENT INFORMATION, OR PERSONAL DATA.**
+
+        Do not attach employment contracts, offer letters, reviewer IDs, client names, or screenshots of the work itself. A public About page or official domain is enough evidence.
+  - type: checkboxes
+    id: confidentiality
+    attributes:
+      label: Confidentiality
+      options:
+        - label: I confirm this report does **not** include confidential project information, task content, internal guidelines, private client information, or personal data.
+          required: true
+  - type: dropdown
+    id: record-type
+    attributes:
+      label: What is wrong?
+      options:
+        - Company profile (directory / company page)
+        - TaskMatch opportunity listing
+        - Other public metadata
+    validations:
+      required: true
+  - type: input
+    id: public-url
+    attributes:
+      label: Public Happy Tasking URL
+      description: The page on happytasking.com or a local route that shows the error.
+      placeholder: https://happytasking.com/companies/example
+    validations:
+      required: true
+  - type: input
+    id: slug
+    attributes:
+      label: Slug or listing id
+      placeholder: example-company
+  - type: textarea
+    id: current
+    attributes:
+      label: What the page says now
+      description: Quote only public fields (name, website, one-line description). No internal names.
+    validations:
+      required: true
+  - type: textarea
+    id: correction
+    attributes:
+      label: Proposed public correction
+      description: What should the public record say instead?
+    validations:
+      required: true
+  - type: textarea
+    id: source
+    attributes:
+      label: Public source
+      description: Link a public page (official site, public docs). Not a private Slack export.
+      placeholder: https://example.com/about
+    validations:
+      required: true
+  - type: markdown
+    attributes:
+      value: |
+        Reminder: **DO NOT INCLUDE CONFIDENTIAL PROJECT INFORMATION, TASK CONTENT, INTERNAL GUIDELINES, PRIVATE CLIENT INFORMATION, OR PERSONAL DATA.**
+
+        Maintainers may still decline a change if the source is not public or if the edit would identify a private client or project.

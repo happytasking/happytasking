@@ -1,0 +1,82 @@
+name: Feature
+description: Propose a product, methodology, or contributor-experience change.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the contributor problem first. Maintainers review proposals against [ROADMAP.md](https://github.com/happytasking/happytasking/blob/main/ROADMAP.md) and [GOVERNANCE.md](https://github.com/happytasking/happytasking/blob/main/GOVERNANCE.md).
+
+        **DO NOT INCLUDE CONFIDENTIAL PROJECT INFORMATION, TASK CONTENT, INTERNAL GUIDELINES, PRIVATE CLIENT INFORMATION, OR PERSONAL DATA.**
+
+        Happy Tasking is independent. Features that would let a company pay to move TaskScore, TaskRate, TaskPulse, Resolution Score, or independent community reviews will be closed.
+
+        Major methodology changes need public discussion before implementation.
+  - type: checkboxes
+    id: confidentiality
+    attributes:
+      label: Confidentiality
+      options:
+        - label: I confirm this proposal does **not** include confidential project information, task content, internal guidelines, private client information, or personal data.
+          required: true
+  - type: dropdown
+    id: pillar
+    attributes:
+      label: Product pillar
+      options:
+        - Community & reputation
+        - TaskScore
+        - TaskRate
+        - TaskPulse
+        - TaskMatch
+        - Resolution Center
+        - Market Intelligence
+        - Happy Tasking Research
+        - B2B workforce / research tooling
+        - Docs / governance / security process
+        - Unsure
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: Who is blocked today, and what are they trying to decide or do?
+      placeholder: Contributors cannot tell why a TaskMatch role scored low on opportunity quality.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: What should Happy Tasking do? Keep it public-safe.
+    validations:
+      required: true
+  - type: dropdown
+    id: methodology
+    attributes:
+      label: Does this change TaskScore, TaskPulse, TaskRate, or Resolution Score methodology?
+      options:
+        - "No"
+        - "Yes — needs public discussion before implementation"
+        - Unsure
+    validations:
+      required: true
+  - type: textarea
+    id: independence
+    attributes:
+      label: Independence & privacy
+      description: Confirm this cannot be used to buy a score, and that it does not require confidential task content or extra personal data.
+      placeholder: No score influence. Uses only public company names, domains, and existing profile fields.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Optional. What else did you try or rule out?
+  - type: markdown
+    attributes:
+      value: |
+        Reminder: **DO NOT INCLUDE CONFIDENTIAL PROJECT INFORMATION, TASK CONTENT, INTERNAL GUIDELINES, PRIVATE CLIENT INFORMATION, OR PERSONAL DATA.**
