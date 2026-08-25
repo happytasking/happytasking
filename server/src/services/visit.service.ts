@@ -85,6 +85,8 @@ export const publicEventSchema = z.object({
     "methodology_viewed",
     "governance_viewed",
     "github_clicked",
+    "homepage_github_clicked",
+    "homepage_manifesto_clicked",
     "contribute_clicked",
     "feature_request_clicked",
     "report_bug_clicked",

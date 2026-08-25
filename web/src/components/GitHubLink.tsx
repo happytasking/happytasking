@@ -18,7 +18,7 @@ export function GitHubLink({
       href={GITHUB.repo}
       className={className}
       target="_blank"
-      rel="noreferrer"
+      rel="noopener noreferrer"
       onClick={() => track("github_clicked")}
     >
       <GitHubIcon className="h-4 w-4" />
@@ -47,7 +47,7 @@ export function TrackedExternalLink({
       href={href}
       className={className}
       target="_blank"
-      rel="noreferrer"
+      rel="noopener noreferrer"
       onClick={() => track(event)}
     >
       {children}
