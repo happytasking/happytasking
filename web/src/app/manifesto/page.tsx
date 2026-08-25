@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { canonicalMetadata } from "@/lib/site";
 import { GitHubLink } from "@/components/GitHubLink";
 import { ContributeCta } from "@/components/ContributeCta";
 import { ManifestoBody, readManifestoMarkdown } from "@/lib/manifesto";
@@ -8,6 +9,7 @@ export const metadata: Metadata = {
   title: "The Happy Tasking Manifesto",
   description:
     "Know before you task. Why Happy Tasking exists, what the community believes, and the AI-work ecosystem we want to help build.",
+  ...canonicalMetadata("/manifesto"),
 };
 
 export default async function ManifestoPage() {

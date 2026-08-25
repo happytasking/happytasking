@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { canonicalMetadata } from "@/lib/site";
 import { IndependenceStatement } from "@/components/IndependenceStatement";
 import { ContributeCta } from "@/components/ContributeCta";
 import { GitHubIcon } from "@/components/GitHubIcon";
@@ -9,6 +10,7 @@ export const metadata: Metadata = {
   title: "Governance — How Happy Tasking is steered",
   description:
     "Happy Tasking is founder-led today and community-informed by design. How issues, methodology, privacy, and independence work.",
+  ...canonicalMetadata("/governance"),
 };
 
 export default function GovernancePage() {

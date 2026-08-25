@@ -22,7 +22,6 @@ const display = Instrument_Serif({
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_ORIGIN),
-  alternates: { canonical: "/" },
   title: {
     default: "Happy Tasking — Know before you task.",
     template: "%s · Happy Tasking",

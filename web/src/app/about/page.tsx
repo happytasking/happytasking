@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { canonicalMetadata } from "@/lib/site";
 import { IndependenceStatement } from "@/components/IndependenceStatement";
 import { ContributeCta } from "@/components/ContributeCta";
 import { GitHubLink } from "@/components/GitHubLink";
@@ -8,6 +9,7 @@ export const metadata: Metadata = {
   title: "About Happy Tasking",
   description:
     "Happy Tasking is an independent community, reputation, matching, and market-intelligence platform for the AI work economy. Know before you task.",
+  ...canonicalMetadata("/about"),
 };
 
 const WHO = [

@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { canonicalMetadata } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Privacy for contributors",
   description:
     "Share your experience, not confidential work. How Happy Tasking treats contributor privacy, public identity, and confidential AI-training material.",
+  ...canonicalMetadata("/privacy-for-contributors"),
 };
 
 const NEVER_ASK = [

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { canonicalMetadata } from "@/lib/site";
 import { IndependenceStatement } from "@/components/IndependenceStatement";
 import { GitHubIcon } from "@/components/GitHubIcon";
 import { GITHUB } from "@/lib/github";
@@ -8,6 +9,7 @@ export const metadata: Metadata = {
   title: "Methodology — How Happy Tasking measures AI work",
   description:
     "What TaskScore, TaskRate, TaskPulse, Resolution Score, and TaskMatch measure, where the data comes from, and where methodology documentation is still being developed.",
+  ...canonicalMetadata("/methodology"),
 };
 
 const METRICS = [

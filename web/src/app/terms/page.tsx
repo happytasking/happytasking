@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { canonicalMetadata } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Community terms",
   description:
     "How to use Happy Tasking: share experience, not confidential work. Full legal terms of service are being prepared.",
+  ...canonicalMetadata("/terms"),
 };
 
 export default function TermsPage() {

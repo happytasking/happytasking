@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { canonicalMetadata } from "@/lib/site";
 import { GitHubLink, TrackedExternalLink } from "@/components/GitHubLink";
 import { GitHubHelpCta } from "@/components/GitHubHelpCta";
 import { GitHubIcon } from "@/components/GitHubIcon";
@@ -9,6 +10,7 @@ export const metadata: Metadata = {
   title: "Happy Tasking Open Source — Built with the AI Work Community",
   description:
     "Happy Tasking is a community-driven open-source platform helping AI workers understand companies, opportunities, reputation and the AI work economy.",
+  ...canonicalMetadata("/open-source"),
 };
 
 const PRINCIPLES = [
