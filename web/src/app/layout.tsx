@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { SITE_ORIGIN } from "@/lib/site";
 import { Geist, Instrument_Serif } from "next/font/google";
 import { Toaster } from "sonner";
 import { AuthProvider } from "@/lib/auth";
@@ -20,10 +21,8 @@ const display = Instrument_Serif({
 });
 
 export const metadata: Metadata = {
-  // Social crawlers need absolute image URLs; set NEXT_PUBLIC_SITE_URL per environment.
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
-  ),
+  metadataBase: new URL(SITE_ORIGIN),
+  alternates: { canonical: "/" },
   title: {
     default: "Happy Tasking — Know before you task.",
     template: "%s · Happy Tasking",

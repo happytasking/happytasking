@@ -15,6 +15,7 @@ import onboardingRoutes from "./routes/onboarding.routes.js";
 import profileRoutes from "./routes/profile.routes.js";
 import taskmatchRoutes from "./routes/taskmatch.routes.js";
 import analyticsRoutes from "./routes/analytics.routes.js";
+import sitemapRoutes from "./routes/sitemap.routes.js";
 
 const app = express();
 
@@ -73,6 +74,7 @@ app.use("/api/v1/onboarding", onboardingRoutes);
 app.use("/api/v1/profile", profileRoutes);
 app.use("/api/v1/taskmatch", taskmatchRoutes);
 app.use("/api/v1/analytics", analyticsRoutes);
+app.use("/api/v1/sitemap", sitemapRoutes);
 
 app.use(errorHandler);
 
