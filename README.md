@@ -8,12 +8,16 @@
 <p align="center"><em>Know before you task.</em></p>
 
 <p align="center">
+  <a href="MANIFESTO.md"><strong>Manifesto</strong></a>
+  ·
   <a href="https://happytasking.com">happytasking.com</a>
   ·
   <a href="https://happytasking.com/privacy-for-contributors">Privacy for contributors</a>
   ·
   <a href="https://happytasking.com/community">Community</a>
 </p>
+
+Why we exist, and what we believe: **[The Happy Tasking Manifesto](MANIFESTO.md)**.
 
 Happy Tasking is an independent community, reputation, matching, resolution, and market-intelligence platform for the AI work economy.
 
@@ -181,6 +185,7 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
 - Pull requests need a linked issue for non-trivial changes.
 - **Share your experience, not confidential work.** Do not commit task prompts, answers, internal guidelines, client names, reviewer identities, or private Slack / War Room content.
 
+Why we exist: [MANIFESTO.md](MANIFESTO.md).  
 Community standards: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).  
 Product direction: [ROADMAP.md](ROADMAP.md).  
 How decisions are made: [GOVERNANCE.md](GOVERNANCE.md).  
@@ -221,6 +226,7 @@ Contributor-facing product rules: [Privacy for contributors](https://happytaskin
 
 | | |
 |---|---|
+| Manifesto | [MANIFESTO.md](MANIFESTO.md) |
 | Website | [happytasking.com](https://happytasking.com) |
 | Community | [happytasking.com/community](https://happytasking.com/community) |
 | TaskMatch | [happytasking.com/taskmatch](https://happytasking.com/taskmatch) |

@@ -1,5 +1,8 @@
 blank_issues_enabled: false
 contact_links:
+  - name: The Happy Tasking Manifesto
+    url: https://github.com/happytasking/happytasking/blob/main/MANIFESTO.md
+    about: Why this community exists. Not a bug report.
   - name: Security vulnerability
     url: mailto:security@happytasking.com
     about: Private reports only. Do not file a public issue. See SECURITY.md.
