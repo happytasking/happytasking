@@ -9,6 +9,7 @@ import type { Company, CreateIssueInput, Issue, Pagination } from "@/lib/types";
 import { Skeleton } from "@/components/Skeleton";
 import { ISSUE_CATEGORIES, humanize } from "@/lib/format";
 import { useAuth } from "@/lib/auth";
+import { ConfidentialityNote } from "@/components/ConfidentialityNote";
 
 function NewIssueContent() {
   const router = useRouter();
@@ -122,14 +123,8 @@ function NewIssueContent() {
         <h1 className="page-title mt-1">Report an issue</h1>
         <p className="mt-2 text-sm text-muted">
           Use this for payment problems, reviewer disputes, and support failures.
-          Share your experience, not confidential work.{" "}
-          <Link
-            href="/privacy-for-contributors"
-            className="font-semibold text-accent hover:underline"
-          >
-            Privacy for contributors
-          </Link>
         </p>
+        <ConfidentialityNote className="mt-4" />
       </div>
 
       <form onSubmit={onSubmit} className="panel panel-pad space-y-4">

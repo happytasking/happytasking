@@ -78,6 +78,37 @@ export async function recordPageview(
   return { recorded: true as const };
 }
 
+export const publicEventSchema = z.object({
+  name: z.enum([
+    "open_source_page_viewed",
+    "manifesto_viewed",
+    "methodology_viewed",
+    "governance_viewed",
+    "github_clicked",
+    "contribute_clicked",
+    "feature_request_clicked",
+    "report_bug_clicked",
+  ]),
+  sessionId: z.string().min(8).max(80).optional(),
+});
+
+export async function recordPublicEvent(
+  input: z.infer<typeof publicEventSchema>,
+  meta: RequestMeta,
+  userId?: string,
+) {
+  if (isBotUserAgent(meta.userAgent)) {
+    return { recorded: false, reason: "bot" as const };
+  }
+  await trackEvent(input.name, {
+    userId: userId || null,
+    properties: {
+      sessionId: input.sessionId ?? null,
+    },
+  });
+  return { recorded: true as const };
+}
+
 export async function recordAuthEvent(
   name: "login_succeeded" | "signup_completed",
   userId: string,

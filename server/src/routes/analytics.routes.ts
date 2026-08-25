@@ -13,6 +13,7 @@ const pageviewLimiter = rateLimit({
 const router = Router();
 
 router.post("/pageview", pageviewLimiter, optionalAuth, insights.pageview);
+router.post("/event", pageviewLimiter, optionalAuth, insights.publicEvent);
 router.get("/insights", requireAuth, requireModerator, insights.insights);
 
 export default router;

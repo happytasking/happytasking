@@ -19,6 +19,8 @@ import { Skeleton, SkeletonCards } from "@/components/Skeleton";
 import { authorName, UserAvatar } from "@/components/UserAvatar";
 import { DISCUSSION_CATEGORIES, formatDate, humanize } from "@/lib/format";
 import { useAuth } from "@/lib/auth";
+import { ConfidentialityNote } from "@/components/ConfidentialityNote";
+import { ContributeCta } from "@/components/ContributeCta";
 
 const SORT_TABS = [
   { value: "trending", label: "Trending" },
@@ -134,7 +136,7 @@ function CommunityContent() {
           <h1 className="page-title mt-1">Community</h1>
           <p className="mt-2 max-w-xl text-sm text-muted">
             Professional discussion for AI work — pay, availability, onboarding,
-            and platforms.
+            and platforms. Share your experience, not confidential work.
           </p>
         </div>
         <button
@@ -169,9 +171,7 @@ function CommunityContent() {
         <form onSubmit={onCreate} className="panel panel-pad space-y-4">
           <div>
             <h2 className="section-title">Start a discussion</h2>
-            <p className="mt-1 text-sm text-muted">
-              Keep it professional. Never share confidential project content.
-            </p>
+            <ConfidentialityNote className="mt-3" />
           </div>
           {!user && (
             <p className="rounded-[--radius-sm] bg-surface-2 px-3 py-2 text-sm text-muted">
@@ -350,6 +350,18 @@ function CommunityContent() {
         </div>
       )}
       </div>
+
+      <section className="panel panel-pad">
+        <h2 className="section-title">Help build Happy Tasking</h2>
+        <p className="mt-3 text-sm leading-relaxed text-muted">
+          Happy Tasking grows through more than reviews. You can share
+          experience, improve company data, report current task conditions,
+          suggest features, contribute code, translate, and discuss methodology.
+        </p>
+        <div className="mt-4">
+          <ContributeCta className="btn btn-accent min-h-11" label="See ways to contribute" />
+        </div>
+      </section>
     </div>
   );
 }

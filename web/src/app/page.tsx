@@ -21,6 +21,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { ErrorNote } from "@/components/ErrorNote";
 import { BrandTagline } from "@/components/Logo";
 import { SectionHeader } from "@/components/SectionHeader";
+import { CommunityTrustSection } from "@/components/CommunityTrustSection";
 import { Skeleton, SkeletonCards, SkeletonRows } from "@/components/Skeleton";
 import { StatCard } from "@/components/StatCard";
 import { TaskScoreBadge } from "@/components/TaskScoreBadge";
@@ -520,6 +521,8 @@ export default function HomePage() {
             )}
           </div>
         </section>
+
+        <CommunityTrustSection />
       </div>
     </div>
   );

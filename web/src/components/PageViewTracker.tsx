@@ -33,6 +33,20 @@ export function PageViewTracker() {
         sessionId: sessionId(),
       },
     }).catch(() => undefined);
+
+    const named: Record<string, string> = {
+      "/open-source": "open_source_page_viewed",
+      "/manifesto": "manifesto_viewed",
+      "/methodology": "methodology_viewed",
+      "/governance": "governance_viewed",
+    };
+    const event = named[pathname];
+    if (event) {
+      void api("/analytics/event", {
+        method: "POST",
+        body: { name: event, sessionId: sessionId() },
+      }).catch(() => undefined);
+    }
   }, [pathname, searchParams]);
 
   return null;

@@ -9,6 +9,7 @@ import type { Company, CreateReviewInput, Domain, Pagination } from "@/lib/types
 import { CompanyLogo } from "@/components/CompanyLogo";
 import { Skeleton } from "@/components/Skeleton";
 import { useAuth } from "@/lib/auth";
+import { ConfidentialityNote } from "@/components/ConfidentialityNote";
 
 const TOTAL_STEPS = 6;
 
@@ -225,6 +226,7 @@ function NewReviewContent() {
         <p className="mt-2 text-sm text-muted">
           Structured feedback only. Share your experience, not confidential work.
         </p>
+        <ConfidentialityNote className="mt-4" />
       </div>
 
       <div className="panel panel-pad space-y-3">
