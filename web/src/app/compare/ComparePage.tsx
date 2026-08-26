@@ -28,6 +28,7 @@ import {
   RADAR_DIMENSION_LABELS,
   formatMoney,
 } from "@/lib/format";
+import { comparisonPath } from "@/lib/comparisonSeo";
 import type { ComparePageData, CompareSide } from "@/lib/publicPages";
 
 type Side = "a" | "b";
@@ -238,15 +239,15 @@ function CompareContent({ initial }: { initial: ComparePageData }) {
               ["dataannotation", "outlier"],
               ["scale-ai", "surge-ai"],
               ["mercor", "turing"],
-            ].map(([left, right]) => (
-              <Link
-                key={`${left}-${right}`}
-                href={`/compare${qs({ a: left, b: right })}`}
-                className="chip"
-              >
-                {left.replace(/-/g, " ")} vs {right.replace(/-/g, " ")}
-              </Link>
-            ))}
+            ].map(([left, right]) => {
+              const href =
+                comparisonPath(left, right) || `/compare?a=${left}&b=${right}`;
+              return (
+                <Link key={`${left}-${right}`} href={href} className="chip">
+                  {left.replace(/-/g, " ")} vs {right.replace(/-/g, " ")}
+                </Link>
+              );
+            })}
           </div>
         </section>
       )}

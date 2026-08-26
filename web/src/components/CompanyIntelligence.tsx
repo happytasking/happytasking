@@ -16,6 +16,7 @@ import {
   formatScore,
   humanize,
 } from "@/lib/format";
+import { comparisonPath, isValidRelatedComparison } from "@/lib/comparisonSeo";
 import type { Company, Review } from "@/lib/types";
 
 function SourceLabel({
@@ -106,6 +107,9 @@ export function CompanyIntelligence({
   const sample = company.score?.sampleSize;
   const period = company.score?.period;
   const similar = company.similarCompanies || [];
+  const comparable = similar.filter((other) =>
+    isValidRelatedComparison(company, other),
+  );
   const intro = company.description?.trim()
     ? company.description.trim()
     : `${company.name} is listed in the Happy Tasking company directory.`;
@@ -454,21 +458,25 @@ export function CompanyIntelligence({
         <section id="compare" className="panel panel-pad space-y-3">
           <h2 className="section-title">Compare {company.name}</h2>
           <p className="text-sm text-muted">
-            Side-by-side comparison uses the existing comparison tool. These
-            links do not create new indexable comparison pages.
+            Permanent comparison pages for companies that share public work
+            domains. Demo pairs stay noindex.
           </p>
+          {comparable.length > 0 && (
           <ul className="flex flex-wrap gap-2">
-            {similar.map((other) => (
-              <li key={other.slug}>
-                <Link
-                  href={`/compare?a=${company.slug}&b=${other.slug}`}
-                  className="btn btn-secondary min-h-11"
-                >
-                  Compare {company.name} with {other.name}
-                </Link>
-              </li>
-            ))}
+            {comparable.map((other) => {
+              const href =
+                comparisonPath(company.slug, other.slug) ||
+                `/compare?a=${company.slug}`;
+              return (
+                <li key={other.slug}>
+                  <Link href={href} className="btn btn-secondary min-h-11">
+                    Compare {company.name} and {other.name}
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
+          )}
           <p className="text-sm">
             <Link
               href={`/compare?a=${company.slug}`}

@@ -28,11 +28,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     0.7,
     "weekly",
   );
+  const comparisons = mapSitemapEntries(
+    dynamicLists.comparisons,
+    (slug) => `/compare/${slug}`,
+    0.7,
+    "weekly",
+  );
 
   return [
     ...staticSitemapEntries(),
     ...companies,
     ...skills,
     ...opportunities,
+    ...comparisons,
   ];
 }

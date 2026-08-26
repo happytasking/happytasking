@@ -51,7 +51,7 @@ export const STATIC_PUBLIC_ROUTES: Array<{
   { path: "/terms", changeFrequency: "yearly", priority: 0.5 },
 ];
 
-export type SitemapCollection = "companies" | "skills" | "opportunities";
+export type SitemapCollection = "companies" | "skills" | "opportunities" | "comparisons";
 
 export type SitemapEntry = { slug: string; lastModified: string };
 
@@ -59,6 +59,7 @@ export type IndexableLists = {
   companies: SitemapEntry[];
   skills: SitemapEntry[];
   opportunities: SitemapEntry[];
+  comparisons: SitemapEntry[];
   /** False when the upstream sitemap API could not be read. */
   fetched: boolean;
 };
@@ -67,6 +68,7 @@ const EMPTY: IndexableLists = {
   companies: [],
   skills: [],
   opportunities: [],
+  comparisons: [],
   fetched: false,
 };
 
@@ -95,6 +97,9 @@ export const loadIndexableLists = cache(
         skills: Array.isArray(json.data.skills) ? json.data.skills : [],
         opportunities: Array.isArray(json.data.opportunities)
           ? json.data.opportunities
+          : [],
+        comparisons: Array.isArray(json.data.comparisons)
+          ? json.data.comparisons
           : [],
         fetched: true,
       };

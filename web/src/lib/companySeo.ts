@@ -47,6 +47,9 @@ export type SimilarCompany = {
   name: string;
   slug: string;
   isDemo?: boolean;
+  companyStatus?: string;
+  website?: string | null;
+  description?: string | null;
 };
 
 /** Keep in sync with server/src/services/companySeo.eligibility.ts */

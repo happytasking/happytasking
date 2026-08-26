@@ -126,7 +126,14 @@ export type Company = {
   /** Weekly sentiment index for list-view sparklines. */
   scoreTrend?: (number | null)[];
   workDomains?: string[];
-  similarCompanies?: { name: string; slug: string; isDemo?: boolean }[];
+  similarCompanies?: {
+    name: string;
+    slug: string;
+    isDemo?: boolean;
+    companyStatus?: string;
+    website?: string | null;
+    description?: string | null;
+  }[];
   resolution?: {
     sampleSize: number;
     responseRate: number | null;

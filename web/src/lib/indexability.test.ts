@@ -39,6 +39,8 @@ function testSitemapDoesNotIncludePrivateOrDemoPolicy() {
   assert.ok(paths.includes("/"));
   assert.ok(paths.includes("/companies"));
   assert.ok(!paths.some((path) => path.startsWith("/companies/")));
+  assert.ok(paths.includes("/compare"));
+  assert.ok(!paths.some((path) => path.startsWith("/compare/")));
 }
 
 function testHomepageSiteUrlHasTrailingSlash() {

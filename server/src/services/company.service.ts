@@ -520,7 +520,14 @@ async function getSimilarCompanies(
         },
       ],
     },
-    select: { name: true, slug: true, isDemo: true },
+    select: {
+      name: true,
+      slug: true,
+      isDemo: true,
+      companyStatus: true,
+      website: true,
+      description: true,
+    },
     orderBy: { name: "asc" },
     take: 6,
   });
