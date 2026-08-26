@@ -90,6 +90,10 @@ export const publicEventSchema = z.object({
     "contribute_clicked",
     "feature_request_clicked",
     "report_bug_clicked",
+    "taskmatch_landing_viewed",
+    "taskmatch_empty_state_viewed",
+    "taskmatch_personalize_clicked",
+    "opportunity_apply_clicked",
   ]),
   sessionId: z.string().min(8).max(80).optional(),
 });

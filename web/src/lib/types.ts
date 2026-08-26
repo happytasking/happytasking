@@ -552,6 +552,7 @@ export type OpportunityCard = {
   rateUnit: string | null;
   paymentModel: string;
   remoteType: string;
+  countryRestrictions: string[];
   domains: Domain[];
   skills: (Skill & { required: boolean })[];
   candidateMatch: {
@@ -580,6 +581,7 @@ export type TaskMatchList = {
     items: { key: string; label: string; done: boolean }[];
   } | null;
   personalized: boolean;
+  hasCommunityIntelligence?: boolean;
 };
 
 export type OpportunityDetail = OpportunityCard & {

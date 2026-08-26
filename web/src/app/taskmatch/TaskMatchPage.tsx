@@ -11,71 +11,9 @@ import { ErrorNote } from "@/components/ErrorNote";
 import { SkeletonCards } from "@/components/Skeleton";
 import { OpportunityCard } from "@/components/taskmatch/OpportunityCard";
 import { ProfileStrength } from "@/components/taskmatch/ProfileStrength";
+import { TaskMatchLanding } from "@/components/taskmatch/TaskMatchLanding";
 import { formatMoney } from "@/lib/format";
-
-function Landing({ opportunities }: { opportunities: TaskMatchList["items"] }) {
-  return (
-    <div className="space-y-8">
-      <section className="panel panel-pad space-y-4">
-        <p className="eyebrow">TaskMatch</p>
-        <h1 className="page-title">One profile. Better AI-work matches.</h1>
-        <p className="max-w-xl text-sm leading-relaxed text-muted">
-          Find where your AI skills fit best. TaskMatch estimates how well you
-          fit an opportunity — and, separately, whether that opportunity looks
-          worth pursuing using independent Happy Tasking intelligence.
-        </p>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div className="rounded-[var(--radius)] border border-border bg-surface-2 px-4 py-4">
-            <p className="eyebrow">You → role</p>
-            <p className="mt-1 font-semibold">Am I a good fit for this?</p>
-            <p className="mt-1 text-sm text-muted">
-              Skills, experience, language, country, availability, and rate
-              expectations.
-            </p>
-          </div>
-          <div className="rounded-[var(--radius)] border border-border bg-surface-2 px-4 py-4">
-            <p className="eyebrow">Role → you</p>
-            <p className="mt-1 font-semibold">Is this a good fit for me?</p>
-            <p className="mt-1 text-sm text-muted">
-              TaskScore, TaskPulse, pay, stability, and resolution — company-level
-              community data.
-            </p>
-          </div>
-        </div>
-        <p className="text-sm text-muted">
-          These are estimated matches, not job offers. Happy Tasking does not
-          control company hiring decisions.
-        </p>
-        <div className="flex flex-wrap gap-2">
-          <Link href="/register" className="btn btn-accent min-h-11">
-            Build your profile
-          </Link>
-          <Link href="/login" className="btn btn-secondary min-h-11">
-            Log in
-          </Link>
-        </div>
-      </section>
-
-      {opportunities.length > 0 ? (
-        <section className="space-y-4">
-          <h2 className="section-title">Current opportunities</h2>
-          <p className="text-sm text-muted">
-            Public listings. Sign in to see how they fit your profile. Demo
-            listings are labeled.
-          </p>
-          {opportunities.map((item) => (
-            <OpportunityCard key={item.id} item={item} />
-          ))}
-        </section>
-      ) : (
-        <EmptyState
-          title="No public opportunities yet"
-          description="When companies have active listings, they appear here."
-        />
-      )}
-    </div>
-  );
-}
+import { TASKMATCH_H1 } from "@/lib/taskmatchLanding";
 
 function Dashboard() {
   const { searchParams, setQuery } = useSoftQuery();
@@ -138,14 +76,16 @@ function Dashboard() {
       .catch(() => setGaps(null));
   }, []);
 
+  const hasIntel = Boolean(data?.hasCommunityIntelligence);
+
   return (
     <div className="space-y-6">
       <div>
         <p className="eyebrow">TaskMatch</p>
-        <h1 className="page-title mt-1">Find the AI work that fits you.</h1>
+        <h1 className="page-title mt-1">{TASKMATCH_H1}</h1>
         <p className="mt-2 max-w-xl text-sm text-muted">
-          Two scores, kept separate: how well you fit the role, and how attractive
-          the opportunity looks from Happy Tasking intelligence.
+          Two scores, kept separate: how well you fit the role, and how the
+          opportunity looks from independent Happy Tasking intelligence.
         </p>
       </div>
 
@@ -157,9 +97,10 @@ function Dashboard() {
       )}
 
       <section className="panel panel-pad grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <label className="space-y-1">
+        <label className="space-y-1" htmlFor="taskmatch-domain">
           <span className="label">Domain</span>
           <select
+            id="taskmatch-domain"
             className="select"
             value={filters.domain}
             onChange={(e) => setQuery({ domain: e.target.value || null, page: null })}
@@ -172,9 +113,10 @@ function Dashboard() {
             ))}
           </select>
         </label>
-        <label className="space-y-1">
+        <label className="space-y-1" htmlFor="taskmatch-skill">
           <span className="label">Skill</span>
           <select
+            id="taskmatch-skill"
             className="select"
             value={filters.skill}
             onChange={(e) => setQuery({ skill: e.target.value || null })}
@@ -187,50 +129,58 @@ function Dashboard() {
             ))}
           </select>
         </label>
-        <label className="space-y-1">
+        <label className="space-y-1" htmlFor="taskmatch-sort">
           <span className="label">Sort</span>
           <select
+            id="taskmatch-sort"
             className="select"
             value={filters.sort}
             onChange={(e) => setQuery({ sort: e.target.value })}
           >
             <option value="recommended">Recommended</option>
             <option value="match">Best match</option>
-            <option value="quality">Best opportunity quality</option>
+            {hasIntel && <option value="quality">Best opportunity quality</option>}
             <option value="pay">Highest pay</option>
-            <option value="taskscore">Best TaskScore</option>
+            {hasIntel && <option value="taskscore">Best TaskScore</option>}
             <option value="verified">Recently verified</option>
           </select>
         </label>
-        <label className="space-y-1">
-          <span className="label">TaskPulse</span>
-          <select
-            className="select"
-            value={filters.pulse}
-            onChange={(e) => setQuery({ pulse: e.target.value || null })}
-          >
-            <option value="">Any availability</option>
-            <option value="HIGH">High</option>
-            <option value="MODERATE">Moderate</option>
-            <option value="LOW">Low</option>
-            <option value="NO_TASKS">No tasks</option>
-          </select>
-        </label>
-        <label className="space-y-1">
-          <span className="label">Minimum TaskScore</span>
-          <select
-            className="select"
-            value={filters.minTaskScore}
-            onChange={(e) => setQuery({ minTaskScore: e.target.value || null })}
-          >
-            <option value="">Any</option>
-            <option value="60">60+</option>
-            <option value="70">70+</option>
-            <option value="80">80+</option>
-          </select>
-        </label>
-        <label className="flex items-end gap-2 pb-2 text-sm">
+        {hasIntel && (
+          <label className="space-y-1" htmlFor="taskmatch-pulse">
+            <span className="label">Contributor task availability</span>
+            <select
+              id="taskmatch-pulse"
+              className="select"
+              value={filters.pulse}
+              onChange={(e) => setQuery({ pulse: e.target.value || null })}
+            >
+              <option value="">Any reported availability</option>
+              <option value="HIGH">High</option>
+              <option value="MODERATE">Moderate</option>
+              <option value="LOW">Low</option>
+              <option value="NO_TASKS">No tasks</option>
+            </select>
+          </label>
+        )}
+        {hasIntel && (
+          <label className="space-y-1" htmlFor="taskmatch-minscore">
+            <span className="label">Minimum TaskScore</span>
+            <select
+              id="taskmatch-minscore"
+              className="select"
+              value={filters.minTaskScore}
+              onChange={(e) => setQuery({ minTaskScore: e.target.value || null })}
+            >
+              <option value="">Any</option>
+              <option value="60">60+</option>
+              <option value="70">70+</option>
+              <option value="80">80+</option>
+            </select>
+          </label>
+        )}
+        <label className="flex items-end gap-2 pb-2 text-sm" htmlFor="taskmatch-worked">
           <input
+            id="taskmatch-worked"
             type="checkbox"
             checked={filters.includeWorkedWith === "true"}
             onChange={(e) =>
@@ -248,13 +198,13 @@ function Dashboard() {
       ) : !data?.items.length ? (
         <EmptyState
           title="No strong matches yet."
-          description="Improve your profile, or we may not have enough active opportunities in your domain yet."
+          description="Improve your profile, or we may not have enough verified live openings in your domain yet."
           action={
             <div className="flex flex-wrap justify-center gap-2">
-              <Link href="/taskmatch/profile" className="btn btn-accent">
+              <Link href="/taskmatch/profile" className="btn btn-accent min-h-11">
                 Improve your profile
               </Link>
-              <Link href="/taskmatch/profile" className="btn btn-secondary">
+              <Link href="/taskmatch/profile" className="btn btn-secondary min-h-11">
                 Watch my skills
               </Link>
             </div>
@@ -264,7 +214,7 @@ function Dashboard() {
         <section className="space-y-4">
           <h2 className="section-title">Best matches for you</h2>
           {data.items.map((item) => (
-            <OpportunityCard key={item.id} item={item} />
+            <OpportunityCard key={item.id} item={item} personalized />
           ))}
         </section>
       )}
@@ -306,7 +256,7 @@ function Dashboard() {
 function TaskMatchPage({ initial }: { initial: TaskMatchList }) {
   const { user } = useAuth();
   if (user) return <Dashboard />;
-  return <Landing opportunities={initial.items} />;
+  return <TaskMatchLanding opportunities={initial.items} />;
 }
 
 export default function Page({ initial }: { initial: TaskMatchList }) {

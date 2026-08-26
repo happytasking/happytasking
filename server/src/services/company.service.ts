@@ -10,6 +10,7 @@ import {
 } from "./taskScore.service.js";
 import { getCompanySparklines } from "./trends.service.js";
 import { companySEOEligibility } from "./companySeo.eligibility.js";
+import { taskPulseReportScope } from "../lib/taskmatchPublic.js";
 import type { ComplaintStatus } from "@prisma/client";
 
 const PUBLIC_ISSUE_STATUSES: ComplaintStatus[] = [
@@ -191,7 +192,9 @@ export async function listCompanies(params: {
 
   const withScores = await Promise.all(
     companies.map(async (company) => {
-      const score = await getCompanyTaskScore(company.id, period, params.domain);
+      const score = await getCompanyTaskScore(company.id, period, params.domain, {
+        realOnly: !company.isDemo,
+      });
       return { ...company, score };
     }),
   );
@@ -227,7 +230,7 @@ export async function listCompanies(params: {
     pageItems.map(async (company) => ({
       ...company,
       scoreTrend: sparklines.get(company.id) ?? [],
-      pulse: await getTaskPulse(company.id),
+      pulse: await getTaskPulse(company.id, { realOnly: !company.isDemo }),
     })),
   );
 
@@ -244,7 +247,7 @@ export async function getCompanyBySlug(slug: string, period = "90d") {
   const realOnly = !company.isDemo;
   const [score, topIssues, pulse, payByDomain, workDomains, seoEvidence] =
     await Promise.all([
-      getCompanyTaskScore(company.id, period),
+      getCompanyTaskScore(company.id, period, undefined, { realOnly }),
       prisma.complaint.groupBy({
         by: ["category"],
         where: {
@@ -256,7 +259,7 @@ export async function getCompanyBySlug(slug: string, period = "90d") {
         orderBy: { _count: { category: "desc" } },
         take: 5,
       }),
-      getTaskPulse(company.id),
+      getTaskPulse(company.id, { realOnly }),
       getPayByDomain(company.id, { realOnly }),
       getCompanyWorkDomains(company.id),
       getCompanySeoEvidence(company.id),
@@ -298,6 +301,7 @@ export async function getCompanyTaskScore(
   companyId: string,
   period = "90d",
   domainSlug?: string,
+  opts: { realOnly?: boolean } = {},
 ) {
   const since = periodStartDate(period);
   const domain = domainSlug
@@ -309,6 +313,7 @@ export async function getCompanyTaskScore(
       companyId,
       ...(since ? { createdAt: { gte: since } } : {}),
       ...(domain ? { domainId: domain.id } : {}),
+      ...(opts.realOnly ? { isDemo: false } : {}),
     },
     select: TASK_SCORE_REVIEW_SELECT,
   });
@@ -322,7 +327,7 @@ export async function getCompanyTaskScore(
 
 export async function getTaskPulse(
   companyId: string,
-  opts: { domainId?: string; windowDays?: number } = {},
+  opts: { domainId?: string; windowDays?: number; realOnly?: boolean } = {},
 ) {
   const windowDays = opts.windowDays ?? 7;
   const now = new Date();
@@ -331,10 +336,7 @@ export async function getTaskPulse(
   const prev7 = new Date(now);
   prev7.setDate(prev7.getDate() - windowDays * 2);
 
-  const scope = {
-    companyId,
-    ...(opts.domainId ? { domainId: opts.domainId } : {}),
-  };
+  const scope = taskPulseReportScope(companyId, opts);
 
   const recent = await prisma.taskAvailabilityReport.findMany({
     where: { ...scope, reportDate: { gte: last7 } },

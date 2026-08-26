@@ -41,7 +41,12 @@ function testSitemapDoesNotIncludePrivateOrDemoPolicy() {
   assert.ok(!paths.some((path) => path.startsWith("/companies/")));
   assert.ok(paths.includes("/compare"));
   assert.ok(!paths.some((path) => path.startsWith("/compare/")));
+  assert.ok(paths.includes("/taskmatch"));
   assert.ok(paths.includes("/guides"));
+  assert.ok(!paths.includes("/jobs"));
+  assert.ok(!paths.includes("/ai-training-jobs"));
+  assert.ok(!paths.some((path) => path.startsWith("/taskmatch/remote")));
+  assert.ok(!paths.some((path) => path.startsWith("/taskmatch/coding")));
   assert.ok(!paths.some((path) => path.startsWith("/guides/")));
 }
 

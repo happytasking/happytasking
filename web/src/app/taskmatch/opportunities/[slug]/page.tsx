@@ -16,6 +16,7 @@ import { ScoreBar } from "@/components/ScoreBar";
 import { Skeleton } from "@/components/Skeleton";
 import { DualScore } from "@/components/taskmatch/DualScore";
 import { formatDate, formatMoney, formatRelativeTime, humanize } from "@/lib/format";
+import { track } from "@/lib/track";
 
 const JOURNEY = [
   "SAVED",
@@ -141,7 +142,9 @@ export default function OpportunityPage() {
               )}
             </div>
             <h1 className="page-title mt-1">{item.title}</h1>
-            <p className="mt-1 text-sm text-muted">{item.recommendationLabel}</p>
+            {item.candidateMatch && (
+              <p className="mt-1 text-sm text-muted">{item.recommendationLabel}</p>
+            )}
           </div>
         </div>
         <p className="text-sm leading-relaxed text-muted">{item.description}</p>
@@ -150,12 +153,19 @@ export default function OpportunityPage() {
       <DualScore
         match={item.candidateMatch?.score}
         quality={item.opportunityQuality.score}
+        showMatch={item.candidateMatch?.score != null}
+        showQuality={
+          !item.opportunityQuality.insufficient &&
+          item.opportunityQuality.score != null
+        }
       />
 
-      <p className="text-xs text-muted">
-        Match confidence {item.confidence.toLowerCase()}. These are estimated
-        scores, not a guarantee of screening or acceptance.
-      </p>
+      {item.candidateMatch && (
+        <p className="text-xs text-muted">
+          Match confidence {item.confidence.toLowerCase()}. These are estimated
+          scores, not a guarantee of screening or acceptance.
+        </p>
+      )}
 
       <section className="panel panel-pad space-y-3">
         <h2 className="section-title">Your match</h2>
@@ -206,16 +216,20 @@ export default function OpportunityPage() {
         <p className="text-xs text-muted">Company-level community data</p>
         <div className="flex flex-wrap gap-3 text-sm text-muted">
           <span>
-            Task availability{" "}
-            <AvailabilityPill
-              status={item.pulse.availability}
-              trend={item.pulse.trend}
-            />
+            Contributor task availability{" "}
+            {item.pulse.availability ? (
+              <AvailabilityPill
+                status={item.pulse.availability}
+                trend={item.pulse.trend}
+              />
+            ) : (
+              <span>No data</span>
+            )}
           </span>
           <span>
             TaskScore{" "}
             <span className="num font-semibold text-foreground">
-              {item.taskScore ?? "—"}
+              {item.taskScore ?? "No data"}
             </span>
           </span>
         </div>
@@ -327,6 +341,7 @@ export default function OpportunityPage() {
             rel="noopener noreferrer"
             className="btn btn-accent min-h-11"
             onClick={() => {
+              track("opportunity_apply_clicked");
               void api("/profile/events", {
                 method: "POST",
                 body: {

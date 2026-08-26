@@ -9,6 +9,7 @@ async function resolutionScore(companyId: string): Promise<number | null> {
   const issues = await prisma.complaint.findMany({
     where: {
       companyId,
+      isDemo: false,
       status: {
         in: [
           "PUBLISHED",
@@ -47,8 +48,8 @@ export async function getOpportunityQuality(
   companyId: string,
 ): Promise<CompanyIntelligence> {
   const [score, pulse, resolution] = await Promise.all([
-    getCompanyTaskScore(companyId, "90d"),
-    getTaskPulse(companyId),
+    getCompanyTaskScore(companyId, "90d", undefined, { realOnly: true }),
+    getTaskPulse(companyId, { realOnly: true }),
     resolutionScore(companyId),
   ]);
   const quality = computeOpportunityQuality({

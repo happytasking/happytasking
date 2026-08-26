@@ -18,6 +18,10 @@ import {
   type CandidateProfileInput,
   type MatchWeights,
 } from "../lib/taskmatch.js";
+import {
+  hasPublicCommunityIntelligence,
+  publicOpportunityCatalogWhere,
+} from "../lib/taskmatchPublic.js";
 
 const lookingEnum = z.enum(["READY", "OPEN_TO_OFFERS", "NOT_LOOKING"]);
 const workloadEnum = z.enum([
@@ -436,6 +440,7 @@ function scoreOpportunity(
     rateUnit: opp.rateUnit,
     paymentModel: opp.paymentModel,
     remoteType: opp.remoteType,
+    countryRestrictions: opp.countryRestrictions,
     domains: opp.domains.map((d) => d.domain),
     skills: opp.skills.map((s) => ({
       ...s.skill,
@@ -473,8 +478,7 @@ export async function listMatches(
 
   const opportunities = await prisma.opportunity.findMany({
     where: {
-      status: "ACTIVE",
-      ...(query.company ? { company: { slug: query.company } } : {}),
+      ...publicOpportunityCatalogWhere(query.company),
       ...(query.domain
         ? { domains: { some: { domain: { slug: query.domain } } } }
         : {}),
@@ -545,6 +549,14 @@ export async function listMatches(
     items: rows.slice(0, query.limit ?? 20),
     strength: profile?.strength ?? null,
     personalized: Boolean(profile),
+    hasCommunityIntelligence: rows.some((row) =>
+      hasPublicCommunityIntelligence({
+        taskScore: row.taskScore,
+        pulseAvailability: row.pulse.availability,
+        qualityScore: row.opportunityQuality.score,
+        qualityInsufficient: row.opportunityQuality.insufficient,
+      }),
+    ),
   };
 }
 

@@ -15,6 +15,7 @@ import type {
   Skill,
   TaskMatchList,
 } from "./types";
+import { isLiveCatalogOpportunity } from "./taskmatchLanding";
 
 export function firstQuery(
   value: string | string[] | undefined,
@@ -116,9 +117,13 @@ export const loadIssueList = cache(
 );
 
 export const loadPublicTaskMatch = cache(async (): Promise<TaskMatchList> => {
-  return serverApi<TaskMatchList>(
+  const data = await serverApi<TaskMatchList>(
     `/taskmatch${qs({ sort: "recommended", includeWorkedWith: "true" })}`,
   );
+  return {
+    ...data,
+    items: data.items.filter(isLiveCatalogOpportunity),
+  };
 });
 
 export const loadDiscussion = cache(async (id: string) => {

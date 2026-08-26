@@ -57,7 +57,7 @@ export default function SkillPage() {
             {data.items.length}
           </h2>
           {data.items.map((item) => (
-            <OpportunityCard key={item.id} item={item} />
+            <OpportunityCard key={item.id} item={item} personalized={Boolean(user)} />
           ))}
         </section>
       )}

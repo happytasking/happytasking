@@ -130,7 +130,10 @@ export async function createAvailabilityReport(
     await maybeAwardFoundingTasker(userId);
   }
 
-  const pulse = await getTaskPulse(company.id, { domainId: input.domainId });
+  const pulse = await getTaskPulse(company.id, {
+    domainId: input.domainId,
+    realOnly: !company.isDemo,
+  });
   return { report, pulse };
 }
 
@@ -160,7 +163,7 @@ export async function getMarketDashboard() {
   const stability = await Promise.all(
     companies.slice(0, 12).map(async (c) => {
       const score = await computeCompanyPeriodScore(c.id, "90d");
-      const pulse = await getTaskPulse(c.id);
+      const pulse = await getTaskPulse(c.id, { realOnly: !c.isDemo });
       return {
         company: c.name,
         slug: c.slug,
@@ -272,9 +275,9 @@ export async function getLiveMarket(limit = 12) {
   const items = await Promise.all(
     companies.map(async (company) => {
       const [score7d, score90d, pulse, payReports] = await Promise.all([
-        getCompanyTaskScore(company.id, "7d"),
-        getCompanyTaskScore(company.id, "90d"),
-        getTaskPulse(company.id),
+        getCompanyTaskScore(company.id, "7d", undefined, { realOnly: !company.isDemo }),
+        getCompanyTaskScore(company.id, "90d", undefined, { realOnly: !company.isDemo }),
+        getTaskPulse(company.id, { realOnly: !company.isDemo }),
         prisma.payReport.findMany({
           where: {
             companyId: company.id,
