@@ -4,11 +4,13 @@ import {
   mapSitemapEntries,
   staticSitemapEntries,
 } from "@/lib/indexability";
+import { loadIndexableGuides } from "@/lib/guides";
 
 export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const dynamicLists = await loadIndexableLists();
+  const guideEntries = await loadIndexableGuides();
 
   const companies = mapSitemapEntries(
     dynamicLists.companies,
@@ -34,6 +36,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     0.7,
     "weekly",
   );
+  const guides = mapSitemapEntries(
+    guideEntries,
+    (slug) => `/guides/${slug}`,
+    0.7,
+    "monthly",
+  );
 
   return [
     ...staticSitemapEntries(),
@@ -41,5 +49,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...skills,
     ...opportunities,
     ...comparisons,
+    ...guides,
   ];
 }

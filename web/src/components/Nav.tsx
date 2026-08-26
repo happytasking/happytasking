@@ -2,29 +2,52 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { BrandLockup } from "./Logo";
 
-const links = [
+const primaryLinks = [
   { href: "/companies", label: "Companies" },
   { href: "/compare", label: "Compare" },
-  { href: "/community", label: "Community" },
   { href: "/taskmatch", label: "TaskMatch" },
+  { href: "/community", label: "Community" },
   { href: "/market", label: "Market" },
   { href: "/issues", label: "Issues" },
 ];
+
+const resourceLinks = [
+  { href: "/guides", label: "Guides" },
+  { href: "/methodology", label: "Methodology" },
+  { href: "/manifesto", label: "Manifesto" },
+  { href: "/open-source", label: "Open source" },
+];
+
+function linkActive(pathname: string, href: string) {
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+function navItemClass(active: boolean) {
+  return `rounded-md px-3 py-1.5 text-[0.875rem] font-medium transition-colors ${
+    active
+      ? "bg-accent-soft text-accent"
+      : "text-muted hover:bg-[rgba(11,26,45,0.045)] hover:text-foreground"
+  }`;
+}
 
 export function Nav() {
   const pathname = usePathname();
   const { user, logout, loading } = useAuth();
   const [open, setOpen] = useState(false);
-  // Verified company reps get their issue inbox in place of the contributor CTA.
+  const resourcesRef = useRef<HTMLDetailsElement>(null);
   const managed = user?.companies?.find((c) => c.approved);
   const isModerator = user?.role === "MODERATOR" || user?.role === "ADMIN";
+  const resourcesActive = resourceLinks.some((link) =>
+    linkActive(pathname, link.href),
+  );
 
   useEffect(() => {
     setOpen(false);
+    if (resourcesRef.current) resourcesRef.current.open = false;
   }, [pathname]);
 
   return (
@@ -34,24 +57,45 @@ export function Nav() {
           <BrandLockup priority />
 
           <nav className="hidden items-center gap-0.5 md:flex">
-            {links.map((link) => {
-              const active =
-                pathname === link.href || pathname.startsWith(`${link.href}/`);
+            {primaryLinks.map((link) => {
+              const active = linkActive(pathname, link.href);
               return (
                 <Link
                   key={link.href}
                   href={link.href}
                   aria-current={active ? "page" : undefined}
-                  className={`rounded-md px-3 py-1.5 text-[0.875rem] font-medium transition-colors ${
-                    active
-                      ? "bg-accent-soft text-accent"
-                      : "text-muted hover:bg-[rgba(11,26,45,0.045)] hover:text-foreground"
-                  }`}
+                  className={navItemClass(active)}
                 >
                   {link.label}
                 </Link>
               );
             })}
+            <details ref={resourcesRef} className="nav-resources relative">
+              <summary
+                className={`${navItemClass(resourcesActive)} cursor-pointer`}
+              >
+                Resources
+              </summary>
+              <div className="absolute left-0 top-full z-50 mt-1 min-w-44 rounded-lg border border-border bg-surface p-1 shadow-sm">
+                {resourceLinks.map((link) => {
+                  const active = linkActive(pathname, link.href);
+                  return (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      aria-current={active ? "page" : undefined}
+                      className={`block rounded-md px-3 py-2 text-sm font-medium ${
+                        active
+                          ? "bg-accent-soft text-accent"
+                          : "text-muted hover:bg-surface-2 hover:text-foreground"
+                      }`}
+                    >
+                      {link.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            </details>
           </nav>
         </div>
 
@@ -118,7 +162,17 @@ export function Nav() {
       {open && (
         <div className="border-t border-border bg-surface md:hidden">
           <div className="container-page flex flex-col py-2">
-            {links.map((link) => (
+            {primaryLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="rounded-md px-2 py-2.5 text-sm font-medium hover:bg-surface-2"
+              >
+                {link.label}
+              </Link>
+            ))}
+            <p className="eyebrow mt-2 px-2">Resources</p>
+            {resourceLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}

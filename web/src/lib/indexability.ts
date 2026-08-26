@@ -37,6 +37,7 @@ export const STATIC_PUBLIC_ROUTES: Array<{
   { path: "/", changeFrequency: "daily", priority: 1 },
   { path: "/companies", changeFrequency: "daily", priority: 0.9 },
   { path: "/compare", changeFrequency: "weekly", priority: 0.8 },
+  { path: "/guides", changeFrequency: "weekly", priority: 0.8 },
   { path: "/community", changeFrequency: "daily", priority: 0.8 },
   { path: "/market", changeFrequency: "hourly", priority: 0.8 },
   { path: "/issues", changeFrequency: "daily", priority: 0.8 },

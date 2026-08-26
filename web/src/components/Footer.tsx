@@ -9,6 +9,7 @@ const columns = [
     links: [
       { href: "/companies", label: "Companies" },
       { href: "/compare", label: "Compare" },
+      { href: "/guides", label: "Guides" },
       { href: "/taskmatch", label: "TaskMatch" },
       { href: "/market", label: "Market" },
       { href: "/community", label: "Community" },

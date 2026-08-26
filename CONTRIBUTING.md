@@ -48,6 +48,23 @@ Company payments, sponsorships, or “boost my score” ideas will be closed. In
 
 ---
 
+## Guides (editorial)
+
+Guides live in `content/guides/*.mdx` and are reviewed in Git like any other change.
+
+- Propose a topic in a **Feature** issue before writing a long article.
+- Copy `content/guides/_template.mdx` to `{slug}.mdx` and keep `status: draft` until maintainers agree to publish.
+- Factual claims about companies or processes should be sourced (official public docs, Happy Tasking methodology, or clearly labeled community-reported data).
+- Do not include confidential task/project material, leaked assessments, or copied copyrighted articles.
+- Do not invent statistics, pay ranges, or screening questions.
+- Community experience must be labeled as community-reported, not as official company policy.
+- Stay editorially neutral. Happy Tasking does not sell ranking.
+- Update `dateModified` only when the guide receives a meaningful editorial change. Do not bump the date for formatting, metadata-only, or deployment changes.
+
+Draft files are not public URLs. Do not publish thin keyword pages.
+
+---
+
 ## How to work on issues
 
 1. Comment on the issue that you intend to work on it so work is not duplicated.
