@@ -1,17 +1,18 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { canonicalMetadata } from "@/lib/site";
+import { publicPageMetadata } from "@/lib/seo";
 import { GitHubLink, TrackedExternalLink } from "@/components/GitHubLink";
 import { GitHubHelpCta } from "@/components/GitHubHelpCta";
 import { GitHubIcon } from "@/components/GitHubIcon";
 import { GITHUB } from "@/lib/github";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = publicPageMetadata({
+  path: "/open-source",
   title: "Happy Tasking Open Source — Built with the AI Work Community",
   description:
     "Happy Tasking is a community-driven open-source platform helping AI workers understand companies, opportunities, reputation and the AI work economy.",
-  ...canonicalMetadata("/open-source"),
-};
+});
 
 const PRINCIPLES = [
   {
@@ -74,6 +75,12 @@ const WAYS = [
 export default function OpenSourcePage() {
   return (
     <div className="container-page max-w-3xl space-y-12">
+      <Breadcrumbs
+        items={[
+          { name: "Home", path: "/" },
+          { name: "Open source", path: "/open-source" },
+        ]}
+      />
       <header>
         <p className="eyebrow">Open source</p>
         <h1 className="page-title mt-1">

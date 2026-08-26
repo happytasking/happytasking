@@ -1,17 +1,24 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { canonicalMetadata } from "@/lib/site";
+import { publicPageMetadata } from "@/lib/seo";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = publicPageMetadata({
+  path: "/terms",
   title: "Community terms",
   description:
     "How to use Happy Tasking: share experience, not confidential work. Full legal terms of service are being prepared.",
-  ...canonicalMetadata("/terms"),
-};
+});
 
 export default function TermsPage() {
   return (
     <div className="container-page max-w-2xl space-y-8">
+      <Breadcrumbs
+        items={[
+          { name: "Home", path: "/" },
+          { name: "Terms", path: "/terms" },
+        ]}
+      />
       <header>
         <p className="eyebrow">Legal</p>
         <h1 className="page-title mt-1">Community terms</h1>

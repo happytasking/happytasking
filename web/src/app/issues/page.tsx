@@ -1,16 +1,17 @@
 import type { Metadata } from "next";
-import { canonicalMetadata } from "@/lib/site";
+import { publicPageMetadata } from "@/lib/seo";
 import { firstQuery, loadIssueList } from "@/lib/publicPages";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 import IssuesPage from "./IssuesPage";
 
 export const revalidate = 120;
 
-export const metadata: Metadata = {
+export const metadata: Metadata = publicPageMetadata({
+  path: "/issues",
   title: "AI work issues and resolution",
   description:
     "Structured resolution reports from AI work contributors — payment, support, and platform problems, separate from ordinary reviews.",
-  ...canonicalMetadata("/issues"),
-};
+});
 
 export default async function Page({
   searchParams,
@@ -22,5 +23,17 @@ export default async function Page({
     company: firstQuery(params.company),
     page: firstQuery(params.page) ? Number(firstQuery(params.page)) : 1,
   });
-  return <IssuesPage initial={initial} />;
+  return (
+    <>
+      <div className="container-page">
+        <Breadcrumbs
+          items={[
+            { name: "Home", path: "/" },
+            { name: "Issues", path: "/issues" },
+          ]}
+        />
+      </div>
+      <IssuesPage initial={initial} />
+    </>
+  );
 }

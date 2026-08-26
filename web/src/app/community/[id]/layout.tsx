@@ -1,5 +1,10 @@
 import type { Metadata } from "next";
-import { canonicalMetadata, isCanonicalSegment } from "@/lib/site";
+import { notFound } from "next/navigation";
+import { publicPageMetadata } from "@/lib/seo";
+import { isCanonicalSegment } from "@/lib/site";
+import { loadDiscussion } from "@/lib/publicPages";
+import { ServerApiError } from "@/lib/serverApi";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 
 export async function generateMetadata({
   params,
@@ -7,8 +12,22 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id } = await params;
-  if (!isCanonicalSegment(id)) return {};
-  return canonicalMetadata(`/community/${id}`);
+  if (!isCanonicalSegment(id)) notFound();
+  try {
+    const discussion = await loadDiscussion(id);
+    return publicPageMetadata({
+      path: `/community/${id}`,
+      title: discussion.title,
+      description: discussion.body.slice(0, 160),
+      index: !discussion.isDemo,
+      follow: true,
+    });
+  } catch (error) {
+    if (error instanceof ServerApiError && error.statusCode === 404) {
+      notFound();
+    }
+    throw error;
+  }
 }
 
 export default function DiscussionLayout({
@@ -16,5 +35,18 @@ export default function DiscussionLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return children;
+  return (
+    <>
+      <div className="container-page">
+        <Breadcrumbs
+          items={[
+            { name: "Home", path: "/" },
+            { name: "Community", path: "/community" },
+            { name: "Discussion", path: "/community" },
+          ]}
+        />
+      </div>
+      {children}
+    </>
+  );
 }

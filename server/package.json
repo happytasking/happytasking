@@ -12,7 +12,7 @@
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate",
     "db:seed": "tsx prisma/seed.ts",
-    "test": "tsx src/services/taskScore.service.test.ts && tsx src/services/trends.service.test.ts && tsx src/lib/stars.test.ts && tsx src/lib/taskmatch.test.ts"
+    "test": "tsx src/services/taskScore.service.test.ts && tsx src/services/trends.service.test.ts && tsx src/lib/stars.test.ts && tsx src/lib/taskmatch.test.ts && tsx src/services/sitemap.service.test.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

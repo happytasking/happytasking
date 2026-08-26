@@ -3,7 +3,7 @@ import { privatePageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = privatePageMetadata();
 
-export default function TaskMatchProfileLayout({
+export default function PrivateLayout({
   children,
 }: {
   children: React.ReactNode;

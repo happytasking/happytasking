@@ -1,16 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { canonicalMetadata } from "@/lib/site";
+import { publicPageMetadata } from "@/lib/seo";
 import { IndependenceStatement } from "@/components/IndependenceStatement";
 import { ContributeCta } from "@/components/ContributeCta";
 import { GitHubLink } from "@/components/GitHubLink";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = publicPageMetadata({
+  path: "/about",
   title: "About Happy Tasking",
   description:
     "Happy Tasking is an independent community, reputation, matching, and market-intelligence platform for the AI work economy. Know before you task.",
-  ...canonicalMetadata("/about"),
-};
+});
 
 const WHO = [
   "AI trainers",
@@ -26,6 +27,12 @@ const WHO = [
 export default function AboutPage() {
   return (
     <div className="container-page max-w-2xl space-y-10">
+      <Breadcrumbs
+        items={[
+          { name: "Home", path: "/" },
+          { name: "About", path: "/about" },
+        ]}
+      />
       <header>
         <p className="eyebrow">About</p>
         <h1 className="page-title mt-1">What is Happy Tasking?</h1>

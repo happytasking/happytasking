@@ -1,30 +1,16 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-
-/** Private or account surfaces — keep them out of the index. Public pages are left indexable. */
-const PRIVATE_PREFIXES = [
-  "/login",
-  "/register",
-  "/onboarding",
-  "/profile",
-  "/moderation",
-  "/taskmatch/profile",
-  "/reviews/new",
-  "/issues/new",
-];
+import { isPrivatePath } from "@/lib/indexability";
 
 export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-  const isPrivate = PRIVATE_PREFIXES.some(
-    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
-  );
   const response = NextResponse.next();
-  if (isPrivate) {
+  if (isPrivatePath(request.nextUrl.pathname)) {
     response.headers.set("X-Robots-Tag", "noindex, nofollow");
   }
   return response;
 }
 
+/** Matcher must be a static literal for Next.js. Keep in sync with PRIVATE_PREFIXES. */
 export const config = {
   matcher: [
     "/login",

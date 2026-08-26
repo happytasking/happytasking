@@ -20,24 +20,16 @@ export function isCanonicalSegment(value: string): boolean {
   return PATH_SEGMENT.test(value);
 }
 
-function canonicalPath(pathname: string): string {
+export function canonicalPath(pathname: string): string {
   if (pathname === "/") return "/";
   return `/${pathname.replace(/^\/+|\/+$/g, "")}`;
 }
 
-/** Self-referencing canonical resolved against https://happytasking.com. */
+/** @deprecated Prefer publicPageMetadata from @/lib/seo */
 export function canonicalMetadata(pathname: string): Metadata {
   const path = canonicalPath(pathname);
   return {
     alternates: { canonical: path },
     openGraph: { url: path },
-  };
-}
-
-/** Private surfaces should not inherit a public parent's canonical. */
-export function privatePageMetadata(): Metadata {
-  return {
-    alternates: { canonical: null },
-    robots: { index: false, follow: false },
   };
 }

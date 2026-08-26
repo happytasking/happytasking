@@ -1,22 +1,29 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { canonicalMetadata } from "@/lib/site";
+import { publicPageMetadata } from "@/lib/seo";
 import { GitHubLink } from "@/components/GitHubLink";
 import { ContributeCta } from "@/components/ContributeCta";
 import { ManifestoBody, readManifestoMarkdown } from "@/lib/manifesto";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = publicPageMetadata({
+  path: "/manifesto",
   title: "The Happy Tasking Manifesto",
   description:
     "Know before you task. Why Happy Tasking exists, what the community believes, and the AI-work ecosystem we want to help build.",
-  ...canonicalMetadata("/manifesto"),
-};
+});
 
 export default async function ManifestoPage() {
   const markdown = await readManifestoMarkdown();
 
   return (
     <article className="container-page max-w-2xl space-y-10">
+      <Breadcrumbs
+        items={[
+          { name: "Home", path: "/" },
+          { name: "Manifesto", path: "/manifesto" },
+        ]}
+      />
       <header>
         <p className="eyebrow">Manifesto</p>
         <h1 className="page-title mt-1">The Happy Tasking Manifesto</h1>

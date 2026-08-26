@@ -1,18 +1,31 @@
 import type { Metadata } from "next";
-import { canonicalMetadata } from "@/lib/site";
+import { publicPageMetadata } from "@/lib/seo";
 import { loadMarketPage } from "@/lib/publicPages";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 import MarketPage from "./MarketPage";
 
 export const revalidate = 120;
 
-export const metadata: Metadata = {
+export const metadata: Metadata = publicPageMetadata({
+  path: "/market",
   title: "AI Work Market",
   description:
     "Pay, demand, stability, and sentiment aggregated from structured contributor reports across tracked AI work companies.",
-  ...canonicalMetadata("/market"),
-};
+});
 
 export default async function Page() {
   const initial = await loadMarketPage();
-  return <MarketPage initial={initial} />;
+  return (
+    <>
+      <div className="container-page">
+        <Breadcrumbs
+          items={[
+            { name: "Home", path: "/" },
+            { name: "Market", path: "/market" },
+          ]}
+        />
+      </div>
+      <MarketPage initial={initial} />
+    </>
+  );
 }

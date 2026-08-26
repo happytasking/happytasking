@@ -1,21 +1,28 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { canonicalMetadata } from "@/lib/site";
+import { publicPageMetadata } from "@/lib/seo";
 import { IndependenceStatement } from "@/components/IndependenceStatement";
 import { ContributeCta } from "@/components/ContributeCta";
 import { GitHubIcon } from "@/components/GitHubIcon";
 import { GITHUB } from "@/lib/github";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = publicPageMetadata({
+  path: "/governance",
   title: "Governance — How Happy Tasking is steered",
   description:
     "Happy Tasking is founder-led today and community-informed by design. How issues, methodology, privacy, and independence work.",
-  ...canonicalMetadata("/governance"),
-};
+});
 
 export default function GovernancePage() {
   return (
     <div className="container-page max-w-2xl space-y-10">
+      <Breadcrumbs
+        items={[
+          { name: "Home", path: "/" },
+          { name: "Governance", path: "/governance" },
+        ]}
+      />
       <header>
         <p className="eyebrow">Governance</p>
         <h1 className="page-title mt-1">Founder-led today. Community-informed by design.</h1>

@@ -1,5 +1,6 @@
 import type { ComplaintStatus } from "@prisma/client";
 import { prisma } from "../lib/prisma.js";
+import { companyHasIndexableContent, MIN_SITEMAP_DESCRIPTION_CHARS } from "./sitemap.eligibility.js";
 
 const PUBLIC_ISSUE_STATUSES: ComplaintStatus[] = [
   "PUBLISHED",
@@ -9,7 +10,6 @@ const PUBLIC_ISSUE_STATUSES: ComplaintStatus[] = [
 ];
 
 const MAX_PER_COLLECTION = 10_000;
-const MIN_DESCRIPTION_CHARS = 40;
 
 export type SitemapEntry = {
   slug: string;
@@ -61,17 +61,16 @@ async function indexableCompanies(): Promise<SitemapEntry[]> {
   });
 
   return rows
-    .filter((row) => {
-      const counts = row._count;
-      return (
-        row.description.trim().length >= MIN_DESCRIPTION_CHARS ||
-        counts.reviews > 0 ||
-        counts.payReports > 0 ||
-        counts.availabilityReports > 0 ||
-        counts.opportunities > 0 ||
-        counts.complaints > 0
-      );
-    })
+    .filter((row) =>
+      companyHasIndexableContent({
+        description: row.description,
+        reviews: row._count.reviews,
+        payReports: row._count.payReports,
+        availabilityReports: row._count.availabilityReports,
+        opportunities: row._count.opportunities,
+        complaints: row._count.complaints,
+      }),
+    )
     .map((row) => toEntry(row.slug, row.updatedAt));
 }
 
@@ -104,7 +103,7 @@ async function indexableOpportunities(): Promise<SitemapEntry[]> {
   return rows
     .filter(
       (row) =>
-        row.description.trim().length >= MIN_DESCRIPTION_CHARS || row._count.skills > 0,
+        row.description.trim().length >= MIN_SITEMAP_DESCRIPTION_CHARS || row._count.skills > 0,
     )
     .map((row) => toEntry(row.slug, row.updatedAt));
 }

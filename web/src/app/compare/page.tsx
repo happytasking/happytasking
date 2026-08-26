@@ -1,16 +1,17 @@
 import type { Metadata } from "next";
-import { canonicalMetadata } from "@/lib/site";
+import { publicPageMetadata } from "@/lib/seo";
 import { firstQuery, loadComparePage } from "@/lib/publicPages";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 import ComparePage from "./ComparePage";
 
 export const revalidate = 120;
 
-export const metadata: Metadata = {
+export const metadata: Metadata = publicPageMetadata({
+  path: "/compare",
   title: "Compare AI work companies",
   description:
     "Put two AI work platforms side by side on reputation, pay reality, task availability, and the dimensions contributors actually report on.",
-  ...canonicalMetadata("/compare"),
-};
+});
 
 export default async function Page({
   searchParams,
@@ -22,5 +23,17 @@ export default async function Page({
     firstQuery(params.a),
     firstQuery(params.b),
   );
-  return <ComparePage initial={initial} />;
+  return (
+    <>
+      <div className="container-page">
+        <Breadcrumbs
+          items={[
+            { name: "Home", path: "/" },
+            { name: "Compare", path: "/compare" },
+          ]}
+        />
+      </div>
+      <ComparePage initial={initial} />
+    </>
+  );
 }

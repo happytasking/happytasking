@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { privatePageMetadata } from "@/lib/site";
+import { privatePageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = privatePageMetadata();
 

@@ -1,16 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { canonicalMetadata } from "@/lib/site";
+import { publicPageMetadata } from "@/lib/seo";
 import { IndependenceStatement } from "@/components/IndependenceStatement";
 import { GitHubIcon } from "@/components/GitHubIcon";
 import { GITHUB } from "@/lib/github";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = publicPageMetadata({
+  path: "/methodology",
   title: "Methodology — How Happy Tasking measures AI work",
   description:
     "What TaskScore, TaskRate, TaskPulse, Resolution Score, and TaskMatch measure, where the data comes from, and where methodology documentation is still being developed.",
-  ...canonicalMetadata("/methodology"),
-};
+});
 
 const METRICS = [
   {
@@ -84,6 +85,12 @@ const METRICS = [
 export default function MethodologyPage() {
   return (
     <div className="container-page max-w-3xl space-y-10">
+      <Breadcrumbs
+        items={[
+          { name: "Home", path: "/" },
+          { name: "Methodology", path: "/methodology" },
+        ]}
+      />
       <header>
         <p className="eyebrow">Methodology</p>
         <h1 className="page-title mt-1">Context around the numbers</h1>

@@ -1,16 +1,17 @@
 import type { Metadata } from "next";
-import { canonicalMetadata } from "@/lib/site";
+import { publicPageMetadata } from "@/lib/seo";
 import { firstQuery, loadCommunityList } from "@/lib/publicPages";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 import CommunityPage from "./CommunityPage";
 
 export const revalidate = 120;
 
-export const metadata: Metadata = {
+export const metadata: Metadata = publicPageMetadata({
+  path: "/community",
   title: "Community",
   description:
     "Professional discussion for AI work — pay, availability, onboarding, and platforms. Share experience, not confidential work.",
-  ...canonicalMetadata("/community"),
-};
+});
 
 export default async function Page({
   searchParams,
@@ -23,5 +24,17 @@ export default async function Page({
     company: firstQuery(params.company),
     page: firstQuery(params.page) ? Number(firstQuery(params.page)) : 1,
   });
-  return <CommunityPage initial={initial} />;
+  return (
+    <>
+      <div className="container-page">
+        <Breadcrumbs
+          items={[
+            { name: "Home", path: "/" },
+            { name: "Community", path: "/community" },
+          ]}
+        />
+      </div>
+      <CommunityPage initial={initial} />
+    </>
+  );
 }

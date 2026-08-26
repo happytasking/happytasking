@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { canonicalMetadata } from "@/lib/site";
+import { publicPageMetadata } from "@/lib/seo";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = publicPageMetadata({
+  path: "/privacy-for-contributors",
   title: "Privacy for contributors",
   description:
     "Share your experience, not confidential work. How Happy Tasking treats contributor privacy, public identity, and confidential AI-training material.",
-  ...canonicalMetadata("/privacy-for-contributors"),
-};
+});
 
 const NEVER_ASK = [
   "Project codenames or internal program names",
@@ -33,6 +34,12 @@ const WE_DO_COLLECT = [
 export default function PrivacyForContributorsPage() {
   return (
     <div className="container-page max-w-2xl space-y-10">
+      <Breadcrumbs
+        items={[
+          { name: "Home", path: "/" },
+          { name: "Privacy", path: "/privacy-for-contributors" },
+        ]}
+      />
       <header>
         <p className="eyebrow">Privacy</p>
         <h1 className="page-title mt-1">Privacy for contributors</h1>

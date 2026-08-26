@@ -9,6 +9,7 @@ import type {
   LiveMarket,
   MarketDashboard,
   MarketTrends,
+  OpportunityDetail,
   Pagination,
   Review,
   Skill,
@@ -118,6 +119,18 @@ export const loadPublicTaskMatch = cache(async (): Promise<TaskMatchList> => {
   return serverApi<TaskMatchList>(
     `/taskmatch${qs({ sort: "recommended", includeWorkedWith: "true" })}`,
   );
+});
+
+export const loadDiscussion = cache(async (id: string) => {
+  return serverApi<Discussion>(`/community/${id}`);
+});
+
+export const loadIssue = cache(async (publicId: string) => {
+  return serverApi<Issue>(`/issues/${publicId}`);
+});
+
+export const loadOpportunity = cache(async (slug: string) => {
+  return serverApi<OpportunityDetail>(`/taskmatch/opportunities/${slug}`);
 });
 
 async function loadCompareSide(slug?: string): Promise<CompareSide | null> {
