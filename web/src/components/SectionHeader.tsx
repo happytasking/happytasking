@@ -6,6 +6,7 @@ type Props = {
   actionHref?: string;
   actionLabel?: string;
   right?: React.ReactNode;
+  heading?: "h2" | "h3";
 };
 
 export function SectionHeader({
@@ -14,11 +15,13 @@ export function SectionHeader({
   actionHref,
   actionLabel,
   right,
+  heading = "h2",
 }: Props) {
+  const Heading = heading;
   return (
     <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
       <div>
-        <h2 className="section-title">{title}</h2>
+        <Heading className="section-title">{title}</Heading>
         {description && (
           <p className="mt-0.5 text-[0.8125rem] text-muted">{description}</p>
         )}

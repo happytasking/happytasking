@@ -89,9 +89,9 @@ export function CompanyReviewList({ slug }: { slug: string }) {
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="text-[1.0625rem] font-semibold leading-snug">
+                  <h3 className="text-[1.0625rem] font-semibold leading-snug">
                     {r.title}
-                  </h2>
+                  </h3>
                   <DemoBadge show={!!r.isDemo} />
                 </div>
                 <p className="mt-1.5 text-xs text-subtle">

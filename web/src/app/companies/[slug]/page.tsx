@@ -1,11 +1,16 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { publicPageMetadata } from "@/lib/seo";
 import { isCanonicalSegment } from "@/lib/site";
 import { mayIndexListedResource } from "@/lib/indexability";
-import { loadCompany } from "@/lib/publicCompanies";
+import {
+  companyPageMetadata,
+  companySEOEligibility,
+  companySeoInputFromCompany,
+} from "@/lib/companySeo";
+import { loadCompany, loadCompanyReviews } from "@/lib/publicCompanies";
 import { ServerApiError } from "@/lib/serverApi";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { CompanyIntelligence } from "@/components/CompanyIntelligence";
 import { CompanyDetailPage } from "./CompanyDetailPage";
 
 export const revalidate = 120;
@@ -27,6 +32,17 @@ async function companyOrNotFound(slug: string, period: string) {
   }
 }
 
+async function companyIndexable(
+  slug: string,
+  company: Awaited<ReturnType<typeof loadCompany>>,
+) {
+  const eligibility = company.seo
+    ? company.seo
+    : companySEOEligibility(companySeoInputFromCompany(company));
+  if (!eligibility.indexable || company.isDemo) return false;
+  return mayIndexListedResource("companies", slug, Boolean(company.isDemo));
+}
+
 export async function generateMetadata({
   params,
   searchParams,
@@ -34,32 +50,19 @@ export async function generateMetadata({
   const { slug } = await params;
   const { period = "90d" } = await searchParams;
   const company = await companyOrNotFound(slug, period);
-  const index = await mayIndexListedResource(
-    "companies",
-    slug,
-    Boolean(company.isDemo),
-  );
-  const demoNote = company.isDemo
-    ? " Illustrative demo data — not production metrics."
-    : "";
-  return publicPageMetadata({
-    path: `/companies/${slug}`,
-    title: company.isDemo
-      ? `${company.name} (demo data)`
-      : `${company.name} reviews, pay and task availability`,
-    description:
-      (company.description ||
-        `Public community reports about ${company.name} on Happy Tasking.`) +
-      demoNote,
-    index,
-    follow: true,
-  });
+  const index = await companyIndexable(slug, company);
+  return companyPageMetadata(company, index);
 }
 
 export default async function Page({ params, searchParams }: Props) {
   const { slug } = await params;
   const { period = "90d" } = await searchParams;
   const company = await companyOrNotFound(slug, period);
+  const [reviews, indexable] = await Promise.all([
+    loadCompanyReviews(slug, 8),
+    companyIndexable(slug, company),
+  ]);
+
   return (
     <>
       <div className="container-page">
@@ -71,7 +74,12 @@ export default async function Page({ params, searchParams }: Props) {
           ]}
         />
       </div>
-      <CompanyDetailPage key={company.slug} initialCompany={company} />
+      <CompanyIntelligence
+        company={company}
+        reviews={reviews.items}
+        indexable={indexable}
+      />
+      <CompanyDetailPage key={company.slug} initialCompany={company} showHeader={false} />
     </>
   );
 }

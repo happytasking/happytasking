@@ -9,6 +9,15 @@ import {
   TASK_SCORE_REVIEW_SELECT,
 } from "./taskScore.service.js";
 import { getCompanySparklines } from "./trends.service.js";
+import { companySEOEligibility } from "./companySeo.eligibility.js";
+import type { ComplaintStatus } from "@prisma/client";
+
+const PUBLIC_ISSUE_STATUSES: ComplaintStatus[] = [
+  "PUBLISHED",
+  "COMPANY_RESPONDED",
+  "RESOLUTION_PENDING",
+  "UNRESOLVED",
+];
 
 export const createCompanySchema = z.object({
   name: z.string().min(2).max(120),
@@ -232,26 +241,52 @@ export async function getCompanyBySlug(slug: string, period = "90d") {
   const company = await prisma.company.findUnique({ where: { slug } });
   if (!company) throw new ApiError(404, "Company not found");
 
-  const score = await getCompanyTaskScore(company.id, period);
-  const topIssues = await prisma.complaint.groupBy({
-    by: ["category"],
-    where: {
-      companyId: company.id,
-      status: { in: ["PUBLISHED", "COMPANY_RESPONDED", "RESOLUTION_PENDING", "UNRESOLVED"] },
-    },
-    _count: { category: true },
-    orderBy: { _count: { category: "desc" } },
-    take: 5,
-  });
+  const realOnly = !company.isDemo;
+  const [score, topIssues, pulse, payByDomain, workDomains, seoEvidence] =
+    await Promise.all([
+      getCompanyTaskScore(company.id, period),
+      prisma.complaint.groupBy({
+        by: ["category"],
+        where: {
+          companyId: company.id,
+          ...(realOnly ? { isDemo: false } : {}),
+          status: { in: PUBLIC_ISSUE_STATUSES },
+        },
+        _count: { category: true },
+        orderBy: { _count: { category: "desc" } },
+        take: 5,
+      }),
+      getTaskPulse(company.id),
+      getPayByDomain(company.id, { realOnly }),
+      getCompanyWorkDomains(company.id),
+      getCompanySeoEvidence(company.id),
+    ]);
 
-  const pulse = await getTaskPulse(company.id);
-  const payByDomain = await getPayByDomain(company.id);
+  const [resolution, similarCompanies] = await Promise.all([
+    getCompanyResolutionStats(company.id, company.isDemo),
+    getSimilarCompanies(company.id, company.isDemo, workDomains),
+  ]);
+
+  const seo = companySEOEligibility({
+    name: company.name,
+    slug: company.slug,
+    status: company.companyStatus,
+    isDemo: company.isDemo,
+    description: company.description,
+    website: company.website,
+    ...seoEvidence,
+  });
 
   return {
     ...company,
     score,
     pulse,
     payByDomain,
+    workDomains,
+    similarCompanies,
+    resolution,
+    seoEvidence,
+    seo,
     topIssues: topIssues.map((i) => ({
       category: i.category,
       count: i._count.category,
@@ -358,9 +393,12 @@ export async function getTaskPulse(
   };
 }
 
-async function getPayByDomain(companyId: string) {
+async function getPayByDomain(
+  companyId: string,
+  opts: { realOnly?: boolean } = {},
+) {
   const reports = await prisma.payReport.findMany({
-    where: { companyId },
+    where: { companyId, ...(opts.realOnly ? { isDemo: false } : {}) },
     include: { domain: true },
     orderBy: { createdAt: "desc" },
   });
@@ -394,6 +432,188 @@ async function getPayByDomain(companyId: string) {
       : null,
     sampleSize: Math.max(b.advertised.length, b.effective.length),
   }));
+}
+
+async function getCompanySeoEvidence(companyId: string) {
+  const [reviews, payReports, availabilityReports, opportunities, complaints] =
+    await Promise.all([
+      prisma.review.count({ where: { companyId, isDemo: false } }),
+      prisma.payReport.count({ where: { companyId, isDemo: false } }),
+      prisma.taskAvailabilityReport.count({
+        where: { companyId, isDemo: false },
+      }),
+      prisma.opportunity.count({
+        where: { companyId, status: "ACTIVE", isDemo: false },
+      }),
+      prisma.complaint.count({
+        where: {
+          companyId,
+          isDemo: false,
+          status: { in: PUBLIC_ISSUE_STATUSES },
+        },
+      }),
+    ]);
+  return {
+    reviews,
+    payReports,
+    availabilityReports,
+    opportunities,
+    complaints,
+  };
+}
+
+async function getCompanyWorkDomains(companyId: string): Promise<string[]> {
+  const [fromPay, fromReviews, fromOpps] = await Promise.all([
+    prisma.payReport.findMany({
+      where: { companyId, domainId: { not: null } },
+      select: { domain: { select: { name: true } } },
+      distinct: ["domainId"],
+    }),
+    prisma.review.findMany({
+      where: { companyId, domainId: { not: null } },
+      select: { domain: { select: { name: true } } },
+      distinct: ["domainId"],
+    }),
+    prisma.opportunityDomain.findMany({
+      where: { opportunity: { companyId, status: "ACTIVE" } },
+      select: { domain: { select: { name: true } } },
+    }),
+  ]);
+  return [
+    ...new Set(
+      [...fromPay, ...fromReviews, ...fromOpps]
+        .map((row) => row.domain?.name)
+        .filter((name): name is string => Boolean(name)),
+    ),
+  ].slice(0, 12);
+}
+
+async function getSimilarCompanies(
+  companyId: string,
+  isDemo: boolean,
+  domains: string[],
+) {
+  if (domains.length === 0) return [];
+  const rows = await prisma.company.findMany({
+    where: {
+      id: { not: companyId },
+      companyStatus: "ACTIVE",
+      ...(isDemo ? {} : { isDemo: false }),
+      OR: [
+        {
+          payReports: {
+            some: { domain: { name: { in: domains } } },
+          },
+        },
+        {
+          reviews: {
+            some: { domain: { name: { in: domains } } },
+          },
+        },
+        {
+          opportunities: {
+            some: {
+              status: "ACTIVE",
+              domains: { some: { domain: { name: { in: domains } } } },
+            },
+          },
+        },
+      ],
+    },
+    select: { name: true, slug: true, isDemo: true },
+    orderBy: { name: "asc" },
+    take: 6,
+  });
+  return rows;
+}
+
+async function getCompanyResolutionStats(companyId: string, isDemo: boolean) {
+  if (isDemo) return null;
+
+  const issues = await prisma.complaint.findMany({
+    where: {
+      companyId,
+      isDemo: false,
+      status: {
+        in: [
+          "PUBLISHED",
+          "COMPANY_RESPONDED",
+          "RESOLUTION_PENDING",
+          "RESOLVED",
+          "PARTIALLY_RESOLVED",
+          "UNRESOLVED",
+        ],
+      },
+    },
+    select: {
+      status: true,
+      submittedAt: true,
+      resolvedAt: true,
+      resolutionSatisfaction: true,
+      replies: {
+        where: { authorRole: "COMPANY", isDemo: false },
+        orderBy: { createdAt: "asc" },
+        take: 1,
+        select: { createdAt: true },
+      },
+    },
+  });
+
+  if (issues.length === 0) return null;
+
+  const responded = issues.filter(
+    (issue) =>
+      issue.replies.length > 0 ||
+      [
+        "COMPANY_RESPONDED",
+        "RESOLUTION_PENDING",
+        "RESOLVED",
+        "PARTIALLY_RESOLVED",
+      ].includes(issue.status),
+  ).length;
+  const resolved = issues.filter((issue) =>
+    ["RESOLVED", "PARTIALLY_RESOLVED"].includes(issue.status),
+  ).length;
+
+  const responseHours = issues
+    .map((issue) => {
+      const first = issue.replies[0]?.createdAt;
+      if (!first) return null;
+      return (first.getTime() - issue.submittedAt.getTime()) / 36e5;
+    })
+    .filter((hours): hours is number => hours != null && hours >= 0)
+    .sort((a, b) => a - b);
+
+  const medianResponseHours = responseHours.length
+    ? responseHours[Math.floor((responseHours.length - 1) / 2)]
+    : null;
+
+  let resolutionScore: number | null = null;
+  if (issues.length >= 3) {
+    const resolvePct = (resolved / issues.length) * 100;
+    const satisfaction = issues
+      .map((issue) => issue.resolutionSatisfaction)
+      .filter((n): n is number => n != null);
+    if (!satisfaction.length) {
+      resolutionScore = Math.round(resolvePct);
+    } else {
+      const sat =
+        (satisfaction.reduce((a, b) => a + b, 0) / satisfaction.length / 5) *
+        100;
+      resolutionScore = Math.round(resolvePct * 0.6 + sat * 0.4);
+    }
+  }
+
+  return {
+    sampleSize: issues.length,
+    responseRate: Math.round((responded / issues.length) * 100),
+    resolutionRate: Math.round((resolved / issues.length) * 100),
+    resolutionScore,
+    medianResponseHours:
+      medianResponseHours == null
+        ? null
+        : Math.round(medianResponseHours * 10) / 10,
+  };
 }
 
 export async function listDomains() {

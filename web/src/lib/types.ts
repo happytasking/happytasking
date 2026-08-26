@@ -125,6 +125,28 @@ export type Company = {
   topIssues?: { category: string; count: number }[];
   /** Weekly sentiment index for list-view sparklines. */
   scoreTrend?: (number | null)[];
+  workDomains?: string[];
+  similarCompanies?: { name: string; slug: string; isDemo?: boolean }[];
+  resolution?: {
+    sampleSize: number;
+    responseRate: number | null;
+    resolutionRate: number | null;
+    resolutionScore: number | null;
+    medianResponseHours: number | null;
+  } | null;
+  seoEvidence?: {
+    reviews: number;
+    payReports: number;
+    availabilityReports: number;
+    opportunities: number;
+    complaints: number;
+  };
+  seo?: {
+    indexable: boolean;
+    includeInSitemap: boolean;
+    reasons: string[];
+  };
+  updatedAt?: string;
 };
 
 /** Lightweight company reference embedded in reviews, discussions and issues. */

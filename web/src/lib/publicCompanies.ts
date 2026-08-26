@@ -1,7 +1,7 @@
 import { cache } from "react";
 import { serverApi } from "./serverApi";
 import { qs } from "./api";
-import type { Company, Domain, Pagination } from "./types";
+import type { Company, Domain, Pagination, Review } from "./types";
 
 export type CompanyDirectory = {
   items: Company[];
@@ -37,3 +37,11 @@ export const loadCompanyDirectory = cache(
 export const loadCompany = cache(async (slug: string, period = "90d") => {
   return serverApi<Company>(`/companies/${slug}${qs({ period })}`);
 });
+
+export const loadCompanyReviews = cache(
+  async (slug: string, limit = 8): Promise<{ items: Review[]; pagination: Pagination }> => {
+    return serverApi<{ items: Review[]; pagination: Pagination }>(
+      `/reviews/company/${slug}${qs({ page: 1, limit })}`,
+    );
+  },
+);

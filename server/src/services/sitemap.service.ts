@@ -1,6 +1,9 @@
 import type { ComplaintStatus } from "@prisma/client";
 import { prisma } from "../lib/prisma.js";
-import { companyHasIndexableContent, MIN_SITEMAP_DESCRIPTION_CHARS } from "./sitemap.eligibility.js";
+import {
+  companySEOEligibility,
+  MIN_SITEMAP_DESCRIPTION_CHARS,
+} from "./sitemap.eligibility.js";
 
 const PUBLIC_ISSUE_STATUSES: ComplaintStatus[] = [
   "PUBLISHED",
@@ -44,16 +47,22 @@ async function indexableCompanies(): Promise<SitemapEntry[]> {
   const rows = await prisma.company.findMany({
     where: { companyStatus: "ACTIVE", isDemo: false },
     select: {
+      name: true,
       slug: true,
       updatedAt: true,
       description: true,
+      website: true,
+      companyStatus: true,
+      isDemo: true,
       _count: {
         select: {
           reviews: { where: { isDemo: false } },
-          payReports: true,
-          availabilityReports: true,
+          payReports: { where: { isDemo: false } },
+          availabilityReports: { where: { isDemo: false } },
           opportunities: { where: { status: "ACTIVE", isDemo: false } },
-          complaints: { where: { status: { in: PUBLIC_ISSUE_STATUSES } } },
+          complaints: {
+            where: { isDemo: false, status: { in: PUBLIC_ISSUE_STATUSES } },
+          },
         },
       },
     },
@@ -61,15 +70,21 @@ async function indexableCompanies(): Promise<SitemapEntry[]> {
   });
 
   return rows
-    .filter((row) =>
-      companyHasIndexableContent({
-        description: row.description,
-        reviews: row._count.reviews,
-        payReports: row._count.payReports,
-        availabilityReports: row._count.availabilityReports,
-        opportunities: row._count.opportunities,
-        complaints: row._count.complaints,
-      }),
+    .filter(
+      (row) =>
+        companySEOEligibility({
+          name: row.name,
+          slug: row.slug,
+          status: row.companyStatus,
+          isDemo: row.isDemo,
+          description: row.description,
+          website: row.website,
+          reviews: row._count.reviews,
+          payReports: row._count.payReports,
+          availabilityReports: row._count.availabilityReports,
+          opportunities: row._count.opportunities,
+          complaints: row._count.complaints,
+        }).includeInSitemap,
     )
     .map((row) => toEntry(row.slug, row.updatedAt));
 }

@@ -50,7 +50,13 @@ import {
 } from "@/components/TrendPanels";
 import { CompanyMatches } from "@/components/taskmatch/CompanyMatches";
 
-function CompanyDetailContent({ initialCompany }: { initialCompany: Company }) {
+function CompanyDetailContent({
+  initialCompany,
+  showHeader = true,
+}: {
+  initialCompany: Company;
+  showHeader?: boolean;
+}) {
   const params = useParams<{ slug: string }>();
   const { searchParams, setQuery } = useSoftQuery();
   const period = searchParams.get("period") || "90d";
@@ -161,7 +167,8 @@ function CompanyDetailContent({ initialCompany }: { initialCompany: Company }) {
         refreshing ? "opacity-60" : "opacity-100"
       }`}
       aria-busy={refreshing}
-    >      <div className="flex flex-wrap items-start justify-between gap-4">
+    >      {showHeader ? (
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:gap-5">
           <CompanyLogo
             name={company.name}
@@ -211,6 +218,14 @@ function CompanyDetailContent({ initialCompany }: { initialCompany: Company }) {
           </Link>
         </div>
       </div>
+      ) : (
+        <div>
+          <h2 className="section-title">Explore the data</h2>
+          <p className="mt-1 text-sm text-muted">
+            Charts and period filters for contributors using the page.
+          </p>
+        </div>
+      )}
 
       <CompanyClaimPanel
         slug={company.slug}
@@ -285,6 +300,7 @@ function CompanyDetailContent({ initialCompany }: { initialCompany: Company }) {
         <div className="space-y-6">
           <section className="panel panel-pad">
             <SectionHeader
+              heading="h3"
               title="Score dimensions"
               description="Aggregated 0–100 from structured reports"
               actionHref={`/compare?a=${company.slug}`}
@@ -340,6 +356,7 @@ function CompanyDetailContent({ initialCompany }: { initialCompany: Company }) {
 
             <section className="panel panel-pad">
               <SectionHeader
+              heading="h3"
                 title="TaskPulse"
                 description="Last 7 days"
               />
@@ -395,6 +412,7 @@ function CompanyDetailContent({ initialCompany }: { initialCompany: Company }) {
 
             <section className="panel panel-pad">
               <SectionHeader
+              heading="h3"
                 title="Pay by domain"
                 description="Advertised vs effective hourly"
               />
@@ -465,6 +483,7 @@ function CompanyDetailContent({ initialCompany }: { initialCompany: Company }) {
           <div className="grid gap-6">
             <section className="panel panel-pad">
               <SectionHeader
+              heading="h3"
                 title="Community"
                 actionHref={`/community?company=${company.slug}`}
                 actionLabel="All"
@@ -497,7 +516,13 @@ function CompanyDetailContent({ initialCompany }: { initialCompany: Company }) {
   );
 }
 
-export function CompanyDetailPage({ initialCompany }: { initialCompany: Company }) {
+export function CompanyDetailPage({
+  initialCompany,
+  showHeader = true,
+}: {
+  initialCompany: Company;
+  showHeader?: boolean;
+}) {
   return (
     <Suspense
       fallback={
@@ -507,7 +532,10 @@ export function CompanyDetailPage({ initialCompany }: { initialCompany: Company 
         </div>
       }
     >
-      <CompanyDetailContent initialCompany={initialCompany} />
+      <CompanyDetailContent
+        initialCompany={initialCompany}
+        showHeader={showHeader}
+      />
     </Suspense>
   );
 }
