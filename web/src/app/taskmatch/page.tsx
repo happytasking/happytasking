@@ -1,9 +1,18 @@
 import type { Metadata } from "next";
 import { canonicalMetadata } from "@/lib/site";
+import { loadPublicTaskMatch } from "@/lib/publicPages";
 import TaskMatchPage from "./TaskMatchPage";
 
-export const metadata: Metadata = canonicalMetadata("/taskmatch");
+export const revalidate = 120;
 
-export default function Page() {
-  return <TaskMatchPage />;
+export const metadata: Metadata = {
+  title: "TaskMatch",
+  description:
+    "Find where your AI skills fit best. TaskMatch estimates role fit and, separately, whether an opportunity looks worth pursuing using independent Happy Tasking intelligence.",
+  ...canonicalMetadata("/taskmatch"),
+};
+
+export default async function Page() {
+  const initial = await loadPublicTaskMatch();
+  return <TaskMatchPage initial={initial} />;
 }

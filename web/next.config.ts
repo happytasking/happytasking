@@ -7,6 +7,9 @@ import type { NextConfig } from "next";
 const apiOrigin = process.env.API_PROXY_ORIGIN || "http://localhost:5000";
 
 const nextConfig: NextConfig = {
+  // Isolated builds (e.g. NEXT_DIST_DIR=.next-verify) must not overwrite the
+  // live systemd `.next` output.
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   async rewrites() {
     return [
       {

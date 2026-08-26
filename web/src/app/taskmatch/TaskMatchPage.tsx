@@ -13,7 +13,7 @@ import { OpportunityCard } from "@/components/taskmatch/OpportunityCard";
 import { ProfileStrength } from "@/components/taskmatch/ProfileStrength";
 import { formatMoney } from "@/lib/format";
 
-function Landing() {
+function Landing({ opportunities }: { opportunities: TaskMatchList["items"] }) {
   return (
     <div className="space-y-8">
       <section className="panel panel-pad space-y-4">
@@ -55,6 +55,24 @@ function Landing() {
           </Link>
         </div>
       </section>
+
+      {opportunities.length > 0 ? (
+        <section className="space-y-4">
+          <h2 className="section-title">Current opportunities</h2>
+          <p className="text-sm text-muted">
+            Public listings. Sign in to see how they fit your profile. Demo
+            listings are labeled.
+          </p>
+          {opportunities.map((item) => (
+            <OpportunityCard key={item.id} item={item} />
+          ))}
+        </section>
+      ) : (
+        <EmptyState
+          title="No public opportunities yet"
+          description="When companies have active listings, they appear here."
+        />
+      )}
     </div>
   );
 }
@@ -285,17 +303,17 @@ function Dashboard() {
   );
 }
 
-function TaskMatchPage() {
-  const { user, loading } = useAuth();
-  if (loading) return <SkeletonCards count={2} />;
-  return user ? <Dashboard /> : <Landing />;
+function TaskMatchPage({ initial }: { initial: TaskMatchList }) {
+  const { user } = useAuth();
+  if (user) return <Dashboard />;
+  return <Landing opportunities={initial.items} />;
 }
 
-export default function Page() {
+export default function Page({ initial }: { initial: TaskMatchList }) {
   return (
     <div className="container-page">
       <Suspense fallback={<SkeletonCards count={2} />}>
-        <TaskMatchPage />
+        <TaskMatchPage initial={initial} />
       </Suspense>
     </div>
   );

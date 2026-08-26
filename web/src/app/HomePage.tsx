@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { api, qs } from "@/lib/api";
 import type {
   Company,
@@ -37,6 +37,7 @@ import {
   Sparkline,
   trendColor,
 } from "@/components/charts";
+import type { HomePageData } from "@/lib/publicPages";
 
 const meterFill = {
   good: "var(--good)",
@@ -59,16 +60,22 @@ function MiniMeter({ value }: { value: number | null | undefined }) {
   );
 }
 
-export default function HomePage() {
-  const [companies, setCompanies] = useState<Company[]>([]);
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [skills, setSkills] = useState<Skill[]>([]);
-  const [liveMarket, setLiveMarket] = useState<LiveMarket | null>(null);
-  const [market, setMarket] = useState<MarketDashboard | null>(null);
-  const [trends, setTrends] = useState<MarketTrends | null>(null);
-  const [companyTotal, setCompanyTotal] = useState<number | null>(null);
-  const [domainCount, setDomainCount] = useState<number | null>(null);
-  const [loading, setLoading] = useState(true);
+export default function HomePage({ initial }: { initial: HomePageData }) {
+  const [companies, setCompanies] = useState<Company[]>(initial.companies);
+  const [reviews, setReviews] = useState<Review[]>(initial.reviews);
+  const [skills, setSkills] = useState<Skill[]>(initial.skills);
+  const [liveMarket, setLiveMarket] = useState<LiveMarket | null>(
+    initial.liveMarket,
+  );
+  const [market, setMarket] = useState<MarketDashboard | null>(initial.market);
+  const [trends, setTrends] = useState<MarketTrends | null>(initial.trends);
+  const [companyTotal, setCompanyTotal] = useState<number | null>(
+    initial.companyTotal,
+  );
+  const [domainCount, setDomainCount] = useState<number | null>(
+    initial.domainCount,
+  );
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -101,9 +108,6 @@ export default function HomePage() {
     }
   }, []);
 
-  useEffect(() => {
-    void load();
-  }, [load]);
 
   return (
     <div className="space-y-14">

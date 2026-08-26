@@ -14,6 +14,7 @@ import { ErrorNote } from "@/components/ErrorNote";
 import { Skeleton, SkeletonCards } from "@/components/Skeleton";
 import { authorName, UserAvatar } from "@/components/UserAvatar";
 import { formatDate, humanize } from "@/lib/format";
+import type { PaginatedList } from "@/lib/publicPages";
 
 function statusTone(status: string) {
   if (status === "RESOLVED" || status === "PARTIALLY_RESOLVED") {
@@ -26,16 +27,19 @@ function statusTone(status: string) {
   return "bg-demo-bg text-demo";
 }
 
-function IssuesContent() {
+function IssuesContent({ initial }: { initial: PaginatedList<Issue> }) {
   const { searchParams, setQuery } = useSoftQuery();
   const { user } = useAuth();
-  const [items, setItems] = useState<Issue[]>([]);
-  const [pagination, setPagination] = useState<Pagination | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [items, setItems] = useState<Issue[]>(initial.items);
+  const [pagination, setPagination] = useState<Pagination | null>(
+    initial.pagination,
+  );
+  const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const hasDataRef = useRef(false);
+  const hasDataRef = useRef(initial.items.length > 0);
   const requestIdRef = useRef(0);
+  const skipFirstLoad = useRef(true);
 
   const filters = useMemo(
     () => ({
@@ -80,6 +84,10 @@ function IssuesContent() {
 
   // Company reps see their own triage queue, so refetch once the session resolves.
   useEffect(() => {
+    if (skipFirstLoad.current) {
+      skipFirstLoad.current = false;
+      return;
+    }
     void load();
   }, [load, user?.id]);
 
@@ -261,7 +269,11 @@ function IssuesContent() {
   );
 }
 
-export default function IssuesPage() {
+export default function IssuesPage({
+  initial,
+}: {
+  initial: PaginatedList<Issue>;
+}) {
   return (
     <Suspense
       fallback={
@@ -271,7 +283,7 @@ export default function IssuesPage() {
         </div>
       }
     >
-      <IssuesContent />
+      <IssuesContent initial={initial} />
     </Suspense>
   );
 }

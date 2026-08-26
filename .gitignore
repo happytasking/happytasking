@@ -30,6 +30,7 @@ storage/private/
 dist/
 build/
 web/.next/
+web/.next-verify/
 web/out/
 server/dist/
 coverage/

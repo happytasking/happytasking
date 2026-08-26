@@ -33,14 +33,14 @@ export async function serverApi<T>(
     json = (await res.json()) as ApiEnvelope<T>;
   } catch {
     throw new ServerApiError(
-      `Company data upstream returned HTTP ${res.status}`,
+      `Upstream data returned HTTP ${res.status}`,
       res.status,
     );
   }
 
   if (!res.ok || !json.success || json.data == null) {
     throw new ServerApiError(
-      json?.message || `Company data upstream returned HTTP ${res.status}`,
+      json?.message || `Upstream data returned HTTP ${res.status}`,
       json?.statusCode || res.status,
     );
   }
