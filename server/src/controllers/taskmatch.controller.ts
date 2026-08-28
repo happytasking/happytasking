@@ -127,3 +127,16 @@ export const adminClose = asyncHandler(async (req: Request, res: Response) => {
   requireModerator(req);
   res.json(new ApiResponse(200, await closeOpportunity(req.params.id as string)));
 });
+
+export const ingestionStatus = asyncHandler(async (req: Request, res: Response) => {
+  requireModerator(req);
+  const { getIngestionStatus } = await import("../opportunities/sync.js");
+  res.json(new ApiResponse(200, await getIngestionStatus()));
+});
+
+export const ingestionSyncNow = asyncHandler(async (req: Request, res: Response) => {
+  requireModerator(req);
+  const { syncOpportunities } = await import("../opportunities/sync.js");
+  const outcome = await syncOpportunities({ trigger: "admin", holder: "admin" });
+  res.json(new ApiResponse(200, outcome));
+});

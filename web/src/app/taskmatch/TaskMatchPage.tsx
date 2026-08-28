@@ -29,6 +29,8 @@ function Dashboard() {
       domain: searchParams.get("domain") || "",
       skill: searchParams.get("skill") || "",
       company: searchParams.get("company") || "",
+      country: searchParams.get("country") || "",
+      remote: searchParams.get("remote") || "",
       pulse: searchParams.get("pulse") || "",
       sort: searchParams.get("sort") || "recommended",
       includeWorkedWith: searchParams.get("includeWorkedWith") || "true",
@@ -46,6 +48,8 @@ function Dashboard() {
           domain: filters.domain || undefined,
           skill: filters.skill || undefined,
           company: filters.company || undefined,
+          country: filters.country || undefined,
+          remote: filters.remote || undefined,
           pulse: filters.pulse || undefined,
           sort: filters.sort,
           includeWorkedWith: filters.includeWorkedWith,
@@ -142,6 +146,8 @@ function Dashboard() {
             {hasIntel && <option value="quality">Best opportunity quality</option>}
             <option value="pay">Highest pay</option>
             {hasIntel && <option value="taskscore">Best TaskScore</option>}
+            <option value="newest">Newest</option>
+            <option value="recent">Recent</option>
             <option value="verified">Recently verified</option>
           </select>
         </label>
@@ -178,6 +184,30 @@ function Dashboard() {
             </select>
           </label>
         )}
+        <label className="space-y-1" htmlFor="taskmatch-country">
+          <span className="label">Country</span>
+          <select
+            id="taskmatch-country"
+            className="select"
+            value={filters.country}
+            onChange={(e) => setQuery({ country: e.target.value || null })}
+          >
+            <option value="">All / unspecified</option>
+            <option value="BR">Brazil</option>
+            <option value="US">United States</option>
+          </select>
+        </label>
+        <label className="flex items-end gap-2 pb-2 text-sm" htmlFor="taskmatch-remote">
+          <input
+            id="taskmatch-remote"
+            type="checkbox"
+            checked={filters.remote === "true"}
+            onChange={(e) =>
+              setQuery({ remote: e.target.checked ? "true" : null })
+            }
+          />
+          Remote listed
+        </label>
         <label className="flex items-end gap-2 pb-2 text-sm" htmlFor="taskmatch-worked">
           <input
             id="taskmatch-worked"

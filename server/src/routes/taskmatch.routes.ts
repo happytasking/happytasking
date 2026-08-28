@@ -20,5 +20,7 @@ router.post("/admin/opportunities", requireAuth, taskmatch.adminCreate);
 router.patch("/admin/opportunities/:id", requireAuth, taskmatch.adminUpdate);
 router.post("/admin/opportunities/:id/verify", requireAuth, taskmatch.adminVerify);
 router.post("/admin/opportunities/:id/close", requireAuth, taskmatch.adminClose);
+router.get("/admin/ingestion", requireAuth, taskmatch.ingestionStatus);
+router.post("/admin/ingestion/sync", requireAuth, taskmatch.ingestionSyncNow);
 
 export default router;

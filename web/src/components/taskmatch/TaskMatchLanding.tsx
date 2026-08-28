@@ -6,6 +6,7 @@ import type { OpportunityCard as Card } from "@/lib/types";
 import { EmptyState } from "@/components/EmptyState";
 import { OpportunityCard } from "@/components/taskmatch/OpportunityCard";
 import { track } from "@/lib/track";
+import { useSoftQuery } from "@/lib/useSoftQuery";
 import {
   TASKMATCH_EMPTY_DESCRIPTION,
   TASKMATCH_EMPTY_TITLE,
@@ -27,7 +28,11 @@ export function TaskMatchLanding({
 }: {
   opportunities: Card[];
 }) {
+  const { searchParams, setQuery } = useSoftQuery();
   const catalog = opportunities.filter(isLiveCatalogOpportunity);
+  const country = searchParams.get("country") || "";
+  const sort = searchParams.get("sort") || "newest";
+  const remote = searchParams.get("remote") === "true";
 
   useEffect(() => {
     track("taskmatch_landing_viewed");
@@ -52,6 +57,50 @@ export function TaskMatchLanding({
 
       <section className="space-y-4">
         <h2 className="section-title">Current opportunities</h2>
+        <div className="flex flex-wrap gap-3">
+          <label className="space-y-1" htmlFor="landing-country">
+            <span className="label">Country</span>
+            <select
+              id="landing-country"
+              className="select"
+              value={country}
+              onChange={(e) => setQuery({ country: e.target.value || null })}
+            >
+              <option value="">All / unspecified</option>
+              <option value="BR">Brazil</option>
+              <option value="US">United States</option>
+            </select>
+          </label>
+          <label className="space-y-1" htmlFor="landing-sort">
+            <span className="label">Sort</span>
+            <select
+              id="landing-sort"
+              className="select"
+              value={sort}
+              onChange={(e) => setQuery({ sort: e.target.value })}
+            >
+              <option value="newest">Newest</option>
+              <option value="pay">Highest pay</option>
+              <option value="recommended">Recommended</option>
+            </select>
+          </label>
+          <label className="flex items-end gap-2 pb-2 text-sm" htmlFor="landing-remote">
+            <input
+              id="landing-remote"
+              type="checkbox"
+              checked={remote}
+              onChange={(e) =>
+                setQuery({ remote: e.target.checked ? "true" : null })
+              }
+            />
+            Remote
+          </label>
+        </div>
+        <p className="text-xs text-muted">
+          Remote does not automatically mean a country is eligible. Brazil
+          results include explicitly eligible, worldwide, and unspecified
+          listings.
+        </p>
         {catalog.length > 0 ? (
           <>
             <p className="text-sm text-muted">

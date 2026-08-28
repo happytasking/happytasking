@@ -324,6 +324,12 @@ export type MarketDashboard = {
     trend: "up" | "down" | "flat";
   }[];
   workerSentiment: number | null;
+  hiringActivity?: {
+    name: string;
+    slug: string;
+    logoUrl?: string | null;
+    activeOpportunities: number;
+  }[];
 };
 
 export type TrendPoint = {
@@ -543,7 +549,11 @@ export type OpportunityCard = {
   sourceType: string;
   sourceLabel: string;
   sourceUrl?: string | null;
+  discoverySource?: string | null;
+  discoveryNote?: string | null;
   lastVerifiedAt: string | null;
+  firstSeenAt?: string | null;
+  publishedAt?: string | null;
   verifiedDaysAgo: number | null;
   stale: boolean;
   currency: string;
@@ -552,7 +562,11 @@ export type OpportunityCard = {
   rateUnit: string | null;
   paymentModel: string;
   remoteType: string;
+  locationText?: string | null;
   countryRestrictions: string[];
+  countryEligibility?: string;
+  countryLabel?: string | null;
+  workType?: string | null;
   domains: Domain[];
   skills: (Skill & { required: boolean })[];
   candidateMatch: {
@@ -586,6 +600,13 @@ export type TaskMatchList = {
 
 export type OpportunityDetail = OpportunityCard & {
   applicationUrl: string | null;
+  originalApplicationUrl?: string | null;
+  referral?: {
+    used: boolean;
+    programName: string | null;
+    campaign: string | null;
+    disclosure: string | null;
+  };
   applicationProcess: unknown;
   screeningType: string | null;
   estimatedProcessMinutes: number | null;

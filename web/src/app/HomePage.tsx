@@ -8,6 +8,7 @@ import type {
   LiveMarket,
   MarketDashboard,
   MarketTrends,
+  OpportunityCard,
   Pagination,
   Review,
   Skill,
@@ -75,6 +76,9 @@ export default function HomePage({ initial }: { initial: HomePageData }) {
   const [domainCount, setDomainCount] = useState<number | null>(
     initial.domainCount,
   );
+  const [opportunities, setOpportunities] = useState<OpportunityCard[]>(
+    initial.opportunities,
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -82,7 +86,7 @@ export default function HomePage({ initial }: { initial: HomePageData }) {
     setLoading(true);
     setError(null);
     try {
-      const [companyRes, latest, skillRes, liveRes, marketRes, trendRes] =
+      const [companyRes, latest, skillRes, liveRes, marketRes, trendRes, taskmatch] =
         await Promise.all([
           api<{ items: Company[]; pagination: Pagination }>(
             `/companies${qs({ sort: "score", period: "90d", limit: 10 })}`,
@@ -92,6 +96,9 @@ export default function HomePage({ initial }: { initial: HomePageData }) {
           api<LiveMarket>("/market/live"),
           api<MarketDashboard>("/market"),
           api<MarketTrends>("/market/trends").catch(() => null),
+          api<{ items: OpportunityCard[] }>(
+            `/taskmatch${qs({ sort: "newest", limit: 8 })}`,
+          ).catch(() => ({ items: [] as OpportunityCard[] })),
         ]);
       setLiveMarket(liveRes);
       setCompanies(companyRes.items);
@@ -101,6 +108,9 @@ export default function HomePage({ initial }: { initial: HomePageData }) {
       setMarket(marketRes);
       setTrends(trendRes);
       setDomainCount(marketRes.medianEffectiveByDomain.length);
+      setOpportunities(
+        (taskmatch.items || []).filter((item) => !item.isDemo && !item.company.isDemo),
+      );
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load data");
     } finally {
@@ -174,6 +184,54 @@ export default function HomePage({ initial }: { initial: HomePageData }) {
 
       <div className="container-page space-y-14">
         {error && <ErrorNote message={error} onRetry={() => void load()} />}
+
+        <section>
+          <SectionHeader
+            title="AI work opportunities"
+            description="Explore current AI training and evaluation work."
+            actionHref="/taskmatch"
+            actionLabel="Explore all opportunities"
+          />
+          {loading ? (
+            <SkeletonCards count={3} />
+          ) : opportunities.length === 0 ? (
+            <EmptyState
+              title="No verified live openings yet"
+              description="Happy Tasking lists independently sourced AI-training opportunities when they exist. This is not a broken catalog."
+            />
+          ) : (
+            <div className="grid gap-3 md:grid-cols-2">
+              {opportunities.slice(0, 8).map((item) => (
+                <Link
+                  key={item.id}
+                  href={`/taskmatch/opportunities/${item.slug}`}
+                  className="panel panel-pad hover:border-accent"
+                >
+                  <p className="text-sm font-semibold">{item.title}</p>
+                  <p className="mt-1 text-sm text-muted">{item.company.name}</p>
+                  <p className="mt-2 text-xs text-muted">
+                    {item.minRate != null
+                      ? `${formatMoney(item.minRate, item.currency)}${
+                          item.maxRate != null && item.maxRate !== item.minRate
+                            ? `–${formatMoney(item.maxRate, item.currency)}`
+                            : ""
+                        }/h`
+                      : "Pay not listed"}
+                    {item.remoteType ? ` · ${humanize(item.remoteType)}` : ""}
+                    {item.lastVerifiedAt
+                      ? ` · Verified ${formatDate(item.lastVerifiedAt)}`
+                      : ""}
+                  </p>
+                </Link>
+              ))}
+            </div>
+          )}
+          <p className="mt-3 text-sm">
+            <Link href="/register" className="font-semibold text-accent">
+              Get personalized matches
+            </Link>
+          </p>
+        </section>
 
         <section>
           <SectionHeader

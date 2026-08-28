@@ -12,7 +12,8 @@
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate",
     "db:seed": "tsx prisma/seed.ts",
-    "test": "tsx src/services/taskScore.service.test.ts && tsx src/services/trends.service.test.ts && tsx src/lib/stars.test.ts && tsx src/lib/taskmatch.test.ts && tsx src/lib/taskmatchPublic.test.ts && tsx src/services/sitemap.service.test.ts && tsx src/services/companySeo.eligibility.test.ts && tsx src/services/comparisonSeo.eligibility.test.ts"
+    "opportunities:sync": "node dist/jobs/syncOpportunities.js",
+    "test": "tsx src/services/taskScore.service.test.ts && tsx src/services/trends.service.test.ts && tsx src/lib/stars.test.ts && tsx src/lib/taskmatch.test.ts && tsx src/lib/taskmatchPublic.test.ts && tsx src/services/sitemap.service.test.ts && tsx src/services/companySeo.eligibility.test.ts && tsx src/services/comparisonSeo.eligibility.test.ts && tsx src/opportunities/pay.test.ts && tsx src/opportunities/urls.test.ts && tsx src/opportunities/country.test.ts && tsx src/opportunities/relevance.test.ts && tsx src/opportunities/referrals.test.ts && tsx src/opportunities/provenance.test.ts && tsx src/opportunities/fingerprint.test.ts && tsx src/opportunities/adapters/aitrainingJobs.test.ts && tsx src/opportunities/adapters/ats.test.ts && tsx src/opportunities/lock.test.ts && tsx src/opportunities/lifecycle.test.ts && tsx src/opportunities/dedupe.test.ts && tsx src/opportunities/http.test.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

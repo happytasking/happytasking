@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { loadPublicTaskMatch } from "@/lib/publicPages";
+import { firstQuery, loadPublicTaskMatch } from "@/lib/publicPages";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { taskmatchPageMetadata } from "@/lib/taskmatchLanding";
 import TaskMatchPage from "./TaskMatchPage";
@@ -8,8 +8,19 @@ export const revalidate = 120;
 
 export const metadata: Metadata = taskmatchPageMetadata();
 
-export default async function Page() {
-  const initial = await loadPublicTaskMatch();
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const sp = await searchParams;
+  const initial = await loadPublicTaskMatch({
+    country: firstQuery(sp.country),
+    domain: firstQuery(sp.domain),
+    company: firstQuery(sp.company),
+    remote: firstQuery(sp.remote),
+    sort: firstQuery(sp.sort) || "newest",
+  });
   return (
     <>
       <div className="container-page">

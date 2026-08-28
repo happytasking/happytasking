@@ -237,6 +237,7 @@ enum StartTiming {
 enum OpportunityStatus {
   ACTIVE
   PAUSED
+  STALE
   CLOSED
   EXPIRED
   UNKNOWN
@@ -247,6 +248,46 @@ enum OpportunitySourceType {
   PUBLIC_LISTING
   COMPANY_SUBMITTED
   COMMUNITY_REPORTED
+  AUTHORIZED_AGGREGATOR
+  PUBLIC_API
+  PUBLIC_FEED
+  PUBLIC_PAGE
+}
+
+enum OpportunityAccessMode {
+  AUTHORIZED_AGGREGATOR
+  PUBLIC_API
+  PUBLIC_FEED
+  PUBLIC_PAGE
+  COMPANY_SUBMITTED
+  COMMUNITY_REPORTED
+  MANUAL
+}
+
+enum OpportunitySyncRunStatus {
+  RUNNING
+  SUCCESS
+  PARTIAL_SUCCESS
+  FAILED
+  SKIPPED_LOCKED
+}
+
+enum OpportunityRelevanceStatus {
+  ACCEPTED
+  QUARANTINED
+  REJECTED
+}
+
+enum CountryEligibility {
+  EXPLICIT
+  GLOBAL
+  UNSPECIFIED
+}
+
+enum ReferralProgramStatus {
+  ACTIVE
+  INACTIVE
+  PENDING
 }
 
 enum OpportunityRemoteType {
@@ -382,8 +423,10 @@ model Company {
   marketSignals       MarketSignalSnapshot[]
   taskWatches         TaskWatch[]
   notifications       Notification[]
-  opportunities       Opportunity[]
-  applicationGuide    CompanyApplicationGuide?
+  opportunities         Opportunity[]
+  applicationGuide      CompanyApplicationGuide?
+  referralPrograms      ReferralProgram[]
+  referralDestinations  ReferralDestination[]
 
   @@index([name])
   @@index([claimStatus])
@@ -988,38 +1031,55 @@ model UserWorkPreference {
 }
 
 model Opportunity {
-  id                       String                 @id @default(cuid())
+  id                       String                     @id @default(cuid())
   companyId                String
   title                    String
-  slug                     String                 @unique
-  description              String                 @default("")
-  status                   OpportunityStatus      @default(ACTIVE)
-  sourceType               OpportunitySourceType  @default(ADMIN)
+  slug                     String                     @unique
+  description              String                     @default("")
+  summary                  String                     @default("")
+  status                   OpportunityStatus          @default(ACTIVE)
+  sourceType               OpportunitySourceType      @default(ADMIN)
+  sourceKey                String?
   sourceUrl                String?
-  countryRestrictions      String[]               @default([])
-  remoteType               OpportunityRemoteType  @default(REMOTE)
-  paymentModel             PaymentModel           @default(HOURLY)
-  currency                 String                 @default("USD")
+  externalId               String?
+  fingerprint              String?
+  discoverySource          String?
+  discoveryUrl             String?
+  primarySource            String?
+  primarySourceUrl         String?
+  originalApplicationUrl   String?
+  rawDiscoveryApplicationUrl String?
+  countryRestrictions      String[]                   @default([])
+  countryEligibility       CountryEligibility         @default(UNSPECIFIED)
+  locationText             String?
+  remoteType               OpportunityRemoteType      @default(REMOTE)
+  paymentModel             PaymentModel               @default(HOURLY)
+  currency                 String                     @default("USD")
   minRate                  Float?
   maxRate                  Float?
-  rateUnit                 RateUnit               @default(HOURLY)
+  rateUnit                 RateUnit                   @default(HOURLY)
   weeklyHoursMin           Int?
   weeklyHoursMax           Int?
   experienceYearsMin       Float?
   experienceYearsPreferred Float?
-  languageRequirements     String[]               @default([])
+  languageRequirements     String[]                   @default([])
   applicationUrl           String?
   applicationProcess       Json?
   screeningType            String?
   estimatedProcessMinutes  Int?
   screeningDifficulty      Int?
-  isDemo                   Boolean                @default(false)
-  featured                 Boolean                @default(false)
+  workType                 String?
+  relevanceStatus          OpportunityRelevanceStatus @default(ACCEPTED)
+  relevanceReason          String?
+  isDemo                   Boolean                    @default(false)
+  featured                 Boolean                    @default(false)
   publishedAt              DateTime?
+  firstSeenAt              DateTime?
+  lastSeenAt               DateTime?
   expiresAt                DateTime?
   lastVerifiedAt           DateTime?
-  createdAt                DateTime               @default(now())
-  updatedAt                DateTime               @updatedAt
+  createdAt                DateTime                   @default(now())
+  updatedAt                DateTime                   @updatedAt
 
   company    Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
   skills     OpportunitySkill[]
@@ -1030,10 +1090,15 @@ model Opportunity {
   snapshots  MatchSnapshot[]
   tips       ApplicationTip[]
   screening  ScreeningReport[]
+  referralDestinations ReferralDestination[]
 
+  @@unique([sourceKey, externalId])
   @@index([companyId, status])
   @@index([status, lastVerifiedAt])
   @@index([featured, status])
+  @@index([fingerprint])
+  @@index([status, isDemo, lastSeenAt])
+  @@index([workType, status])
 }
 
 model OpportunitySkill {
@@ -1160,4 +1225,117 @@ model ScreeningReport {
 
   @@index([companyId, createdAt])
   @@index([opportunityId, createdAt])
+}
+
+model OpportunitySource {
+  id                 String                @id @default(cuid())
+  key                String                @unique
+  name               String
+  adapter            String
+  enabled            Boolean               @default(true)
+  accessMode         OpportunityAccessMode
+  syncCadenceMinutes Int                   @default(60)
+  priority           Int                   @default(100)
+  allowedHosts       String[]              @default([])
+  lastAttemptAt      DateTime?
+  lastSuccessAt      DateTime?
+  lastError          String?
+  failureCount       Int                   @default(0)
+  health             String                @default("UNKNOWN")
+  config             Json?
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+
+  results OpportunitySyncSourceResult[]
+}
+
+model OpportunitySyncRun {
+  id          String                   @id @default(cuid())
+  status      OpportunitySyncRunStatus @default(RUNNING)
+  trigger     String                   @default("cron")
+  startedAt   DateTime                 @default(now())
+  completedAt DateTime?
+  durationMs  Int?
+  error       String?
+  metrics     Json?
+
+  sources OpportunitySyncSourceResult[]
+
+  @@index([startedAt])
+  @@index([status, startedAt])
+}
+
+model OpportunitySyncSourceResult {
+  id          String   @id @default(cuid())
+  runId       String
+  sourceKey   String
+  status      String
+  fetched     Int      @default(0)
+  parsed      Int      @default(0)
+  valid       Int      @default(0)
+  rejected    Int      @default(0)
+  quarantined Int      @default(0)
+  created     Int      @default(0)
+  updated     Int      @default(0)
+  unchanged   Int      @default(0)
+  duplicates  Int      @default(0)
+  stale       Int      @default(0)
+  closed      Int      @default(0)
+  errors      Int      @default(0)
+  durationMs  Int?
+  error       String?
+  metrics     Json?
+
+  run    OpportunitySyncRun    @relation(fields: [runId], references: [id], onDelete: Cascade)
+  source OpportunitySource     @relation(fields: [sourceKey], references: [key], onDelete: Restrict)
+
+  @@index([runId])
+  @@index([sourceKey, runId])
+}
+
+model OpportunitySyncLock {
+  id        String   @id
+  token     String
+  holder    String?
+  lockedAt  DateTime
+  expiresAt DateTime
+}
+
+model ReferralProgram {
+  id          String                @id @default(cuid())
+  companyId   String
+  programName String
+  status      ReferralProgramStatus @default(INACTIVE)
+  termsUrl    String?
+  authorized  Boolean               @default(false)
+  disclosure  String                @default("Happy Tasking may earn a commission if you join through this link. This does not affect your pay or our company scores.")
+  verifiedAt  DateTime?
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+
+  company      Company               @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  destinations ReferralDestination[]
+
+  @@index([companyId, status])
+}
+
+model ReferralDestination {
+  id            String   @id @default(cuid())
+  companyId     String
+  opportunityId String?
+  programId     String
+  referralCode  String?
+  referralUrl   String
+  campaign      String?
+  active        Boolean  @default(false)
+  verifiedAt    DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  company     Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  opportunity Opportunity?    @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  program     ReferralProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, active])
+  @@index([opportunityId, active])
 }

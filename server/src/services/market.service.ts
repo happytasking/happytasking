@@ -11,6 +11,7 @@ import {
 } from "./taskScore.service.js";
 import { recordActivationIfNeeded, trackEvent } from "./analytics.service.js";
 import { maybeAwardFoundingTasker } from "./badge.service.js";
+import { hiringActivityByCompany } from "../opportunities/lifecycle.js";
 
 export const payReportSchema = z.object({
   companySlug: z.string(),
@@ -230,6 +231,13 @@ export async function getMarketDashboard() {
       .map((r) => r.effectiveRate!),
   );
 
+  const hiringActivity = (await hiringActivityByCompany()).slice(0, 12).map((row) => ({
+    name: row.company!.name,
+    slug: row.company!.slug,
+    logoUrl: row.company!.logoUrl,
+    activeOpportunities: row.activeOpportunities,
+  }));
+
   return {
     isDemo: true,
     label: "DEMO DATA — illustrative market signals",
@@ -250,6 +258,7 @@ export async function getMarketDashboard() {
       (a, b) => (b.stability ?? -1) - (a.stability ?? -1),
     ),
     workerSentiment: sentiment,
+    hiringActivity,
   };
 }
 

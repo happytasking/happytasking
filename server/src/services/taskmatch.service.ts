@@ -22,6 +22,8 @@ import {
   hasPublicCommunityIntelligence,
   publicOpportunityCatalogWhere,
 } from "../lib/taskmatchPublic.js";
+import { resolveApplicationDestination } from "../opportunities/referrals.js";
+import { brazilEligibleLabel } from "../opportunities/country.js";
 
 const lookingEnum = z.enum(["READY", "OPEN_TO_OFFERS", "NOT_LOOKING"]);
 const workloadEnum = z.enum([
@@ -90,6 +92,7 @@ export const matchQuerySchema = z.object({
   skill: z.string().optional(),
   company: z.string().optional(),
   country: z.string().optional(),
+  remote: z.enum(["true", "false"]).optional(),
   pulse: z.enum(["HIGH", "MODERATE", "LOW", "NO_TASKS"]).optional(),
   minTaskScore: z.coerce.number().min(0).max(100).optional(),
   minQuality: z.coerce.number().min(0).max(100).optional(),
@@ -105,6 +108,7 @@ export const matchQuerySchema = z.object({
       "pay",
       "taskscore",
       "newest",
+      "recent",
       "verified",
     ])
     .optional(),
@@ -362,10 +366,18 @@ function daysAgo(date?: Date | null) {
   return Math.floor((Date.now() - date.getTime()) / (1000 * 60 * 60 * 24));
 }
 
-function sourceLabel(type: string) {
+function sourceLabel(type: string, discoverySource?: string | null) {
   switch (type) {
     case "PUBLIC_LISTING":
       return "Official public listing";
+    case "AUTHORIZED_AGGREGATOR":
+      return discoverySource
+        ? `Discovered through ${discoverySource}`
+        : "Discovered through a public aggregator";
+    case "PUBLIC_FEED":
+    case "PUBLIC_API":
+    case "PUBLIC_PAGE":
+      return "Public listing";
     case "COMPANY_SUBMITTED":
       return "Company-submitted";
     case "COMMUNITY_REPORTED":
@@ -429,18 +441,33 @@ function scoreOpportunity(
     featured: opp.featured,
     status: opp.status,
     sourceType: opp.sourceType,
-    sourceLabel: sourceLabel(opp.sourceType),
+    sourceLabel: sourceLabel(opp.sourceType, opp.discoverySource),
     sourceUrl: opp.sourceUrl,
+    discoverySource: opp.discoverySource,
+    discoveryUrl: opp.discoveryUrl,
+    discoveryNote:
+      opp.sourceType === "PUBLIC_LISTING" && opp.discoverySource
+        ? `Discovered through ${opp.discoverySource}.`
+        : null,
     lastVerifiedAt: opp.lastVerifiedAt,
+    firstSeenAt: opp.firstSeenAt,
+    publishedAt: opp.publishedAt,
     verifiedDaysAgo: daysAgo(opp.lastVerifiedAt),
-    stale: (daysAgo(opp.lastVerifiedAt) ?? 99) > 14,
+    stale: opp.status === "STALE" || (daysAgo(opp.lastVerifiedAt) ?? 99) > 14,
     currency: opp.currency,
     minRate: opp.minRate,
     maxRate: opp.maxRate,
     rateUnit: opp.rateUnit,
     paymentModel: opp.paymentModel,
     remoteType: opp.remoteType,
+    locationText: opp.locationText,
     countryRestrictions: opp.countryRestrictions,
+    countryEligibility: opp.countryEligibility,
+    countryLabel: brazilEligibleLabel({
+      eligibility: opp.countryEligibility,
+      codes: opp.countryRestrictions,
+    }),
+    workType: opp.workType,
     domains: opp.domains.map((d) => d.domain),
     skills: opp.skills.map((s) => ({
       ...s.skill,
@@ -476,9 +503,11 @@ export async function listMatches(
   const weights = await getWeights();
   const profile = userId ? await loadCandidateProfile(userId) : null;
 
+  const country = query.country?.trim().toUpperCase();
   const opportunities = await prisma.opportunity.findMany({
     where: {
       ...publicOpportunityCatalogWhere(query.company),
+      relevanceStatus: "ACCEPTED",
       ...(query.domain
         ? { domains: { some: { domain: { slug: query.domain } } } }
         : {}),
@@ -487,10 +516,23 @@ export async function listMatches(
         : {}),
       ...(query.paymentModel ? { paymentModel: query.paymentModel } : {}),
       ...(query.minRate != null ? { maxRate: { gte: query.minRate } } : {}),
+      ...(query.remote === "true" ? { remoteType: "REMOTE" as const } : {}),
+      ...(country
+        ? {
+            OR: [
+              { countryEligibility: "GLOBAL" as const },
+              { countryEligibility: "UNSPECIFIED" as const },
+              {
+                countryEligibility: "EXPLICIT" as const,
+                countryRestrictions: { has: country },
+              },
+            ],
+          }
+        : {}),
     },
     include: opportunityInclude,
     orderBy: { lastVerifiedAt: "desc" },
-    take: 80,
+    take: 250,
   });
 
   const saved = userId
@@ -525,20 +567,20 @@ export async function listMatches(
     rows.push(scoreOpportunity(opp, intel, profile, weights, savedIds));
   }
 
-  const sort = query.sort || "recommended";
+  const sort = query.sort === "recent" ? "newest" : query.sort || "recommended";
   rows.sort((a, b) => {
+    const recency = (r: (typeof rows)[number]) =>
+      new Date(r.publishedAt ?? r.lastVerifiedAt ?? 0).getTime();
     if (sort === "match") return (b.candidateMatch?.score ?? -1) - (a.candidateMatch?.score ?? -1);
     if (sort === "quality") return (b.opportunityQuality.score ?? -1) - (a.opportunityQuality.score ?? -1);
     if (sort === "pay") return (b.maxRate ?? -1) - (a.maxRate ?? -1);
     if (sort === "taskscore") return (b.taskScore ?? -1) - (a.taskScore ?? -1);
-    if (sort === "newest") {
-      return (b.lastVerifiedAt ? new Date(b.lastVerifiedAt).getTime() : 0) -
-        (a.lastVerifiedAt ? new Date(a.lastVerifiedAt).getTime() : 0);
-    }
+    if (sort === "newest") return recency(b) - recency(a);
     if (sort === "verified") return (a.verifiedDaysAgo ?? 99) - (b.verifiedDaysAgo ?? 99);
     const recRank = (r: (typeof rows)[number]) =>
       (r.candidateMatch?.score ?? 40) * 0.6 + (r.opportunityQuality.score ?? 40) * 0.4;
-    return recRank(b) - recRank(a);
+    const ranked = recRank(b) - recRank(a);
+    return ranked !== 0 ? ranked : recency(b) - recency(a);
   });
 
   if (userId && opts.track !== false) {
@@ -636,9 +678,24 @@ export async function getOpportunityMatch(slug: string, userId?: string) {
     });
   }
 
+  const referral = await resolveApplicationDestination({
+    companyId: opp.companyId,
+    opportunityId: opp.id,
+    originalApplicationUrl: opp.originalApplicationUrl || opp.applicationUrl,
+  });
+
   return {
     ...card,
-    applicationUrl: opp.applicationUrl,
+    applicationUrl: referral.url,
+    originalApplicationUrl: referral.originalApplicationUrl,
+    referral: referral.usedReferral
+      ? {
+          used: true,
+          programName: referral.programName,
+          campaign: referral.campaign,
+          disclosure: referral.disclosure,
+        }
+      : { used: false, programName: null, campaign: null, disclosure: null },
     applicationProcess: opp.applicationProcess,
     screeningType: opp.screeningType,
     estimatedProcessMinutes: opp.estimatedProcessMinutes,

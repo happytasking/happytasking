@@ -1,0 +1,11 @@
+[Unit]
+Description=Hourly Happy Tasking opportunity ingestion
+
+[Timer]
+OnCalendar=hourly
+Persistent=true
+AccuracySec=1min
+Unit=happytasking-opportunities-sync.service
+
+[Install]
+WantedBy=timers.target

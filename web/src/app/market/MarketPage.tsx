@@ -113,7 +113,8 @@ export default function MarketPage({
           </div>
           <p className="mt-2 max-w-2xl text-sm text-muted">
             Pay, demand, stability, and sentiment aggregated from structured
-            contributor reports across tracked AI work companies.
+            contributor reports across tracked AI work companies. Public hiring
+            activity is a separate dataset from TaskPulse.
           </p>
         </div>
         {market.isDemo && (
@@ -126,6 +127,37 @@ export default function MarketPage({
           </div>
         )}
       </div>
+
+      {(market.hiringActivity?.length ?? 0) > 0 && (
+        <section>
+          <SectionHeader
+            title="Public hiring activity"
+            description="Tracked active openings. This is not TaskPulse — recruiting is not the same as contributors receiving tasks."
+          />
+          <div className="panel table-wrap">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Company</th>
+                  <th className="text-right">Tracked active opportunities</th>
+                </tr>
+              </thead>
+              <tbody>
+                {market.hiringActivity!.map((row) => (
+                  <tr key={row.slug}>
+                    <td>
+                      <Link href={`/companies/${row.slug}`} className="font-medium">
+                        {row.name}
+                      </Link>
+                    </td>
+                    <td className="num text-right">{row.activeOpportunities}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
 
       <section>
         <SectionHeader

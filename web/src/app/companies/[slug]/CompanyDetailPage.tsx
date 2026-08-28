@@ -49,6 +49,7 @@ import {
   ReviewVolumeCard,
 } from "@/components/TrendPanels";
 import { CompanyMatches } from "@/components/taskmatch/CompanyMatches";
+import { CompanyCurrentOpportunities } from "@/components/taskmatch/CompanyCurrentOpportunities";
 
 function CompanyDetailContent({
   initialCompany,
@@ -234,6 +235,7 @@ function CompanyDetailContent({
         defaultOpen={searchParams.get("claim") === "1"}
       />
 
+      <CompanyCurrentOpportunities slug={company.slug} name={company.name} />
       <CompanyMatches slug={company.slug} name={company.name} />
 
       <div className="tabs" role="tablist" aria-label="Company sections">

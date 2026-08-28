@@ -94,6 +94,7 @@ export const publicEventSchema = z.object({
     "taskmatch_empty_state_viewed",
     "taskmatch_personalize_clicked",
     "opportunity_apply_clicked",
+    "referral_apply_clicked",
   ]),
   sessionId: z.string().min(8).max(80).optional(),
 });

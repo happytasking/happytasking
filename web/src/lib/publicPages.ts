@@ -9,6 +9,7 @@ import type {
   LiveMarket,
   MarketDashboard,
   MarketTrends,
+  OpportunityCard,
   OpportunityDetail,
   Pagination,
   Review,
@@ -33,6 +34,7 @@ export type HomePageData = {
   market: MarketDashboard;
   trends: MarketTrends | null;
   domainCount: number;
+  opportunities: OpportunityCard[];
 };
 
 export type PaginatedList<T> = {
@@ -52,7 +54,7 @@ export type ComparePageData = {
 };
 
 export const loadHomePage = cache(async (): Promise<HomePageData> => {
-  const [companyRes, latest, skillRes, liveRes, marketRes, trendRes] =
+  const [companyRes, latest, skillRes, liveRes, marketRes, trendRes, taskmatch] =
     await Promise.all([
       serverApi<{ items: Company[]; pagination: Pagination }>(
         `/companies${qs({ sort: "score", period: "90d", limit: 10 })}`,
@@ -62,6 +64,7 @@ export const loadHomePage = cache(async (): Promise<HomePageData> => {
       serverApi<LiveMarket>("/market/live"),
       serverApi<MarketDashboard>("/market"),
       serverApi<MarketTrends>("/market/trends").catch(() => null),
+      loadPublicTaskMatch({ sort: "newest", limit: 8 }),
     ]);
 
   return {
@@ -73,6 +76,7 @@ export const loadHomePage = cache(async (): Promise<HomePageData> => {
     market: marketRes,
     trends: trendRes,
     domainCount: marketRes.medianEffectiveByDomain.length,
+    opportunities: taskmatch.items.filter(isLiveCatalogOpportunity).slice(0, 8),
   };
 });
 
@@ -116,15 +120,34 @@ export const loadIssueList = cache(
   },
 );
 
-export const loadPublicTaskMatch = cache(async (): Promise<TaskMatchList> => {
-  const data = await serverApi<TaskMatchList>(
-    `/taskmatch${qs({ sort: "recommended", includeWorkedWith: "true" })}`,
-  );
-  return {
-    ...data,
-    items: data.items.filter(isLiveCatalogOpportunity),
-  };
-});
+export const loadPublicTaskMatch = cache(
+  async (
+    filters: {
+      country?: string;
+      domain?: string;
+      company?: string;
+      remote?: string;
+      sort?: string;
+      limit?: number;
+    } = {},
+  ): Promise<TaskMatchList> => {
+    const data = await serverApi<TaskMatchList>(
+      `/taskmatch${qs({
+        sort: filters.sort || "newest",
+        includeWorkedWith: "true",
+        country: filters.country,
+        domain: filters.domain,
+        company: filters.company,
+        remote: filters.remote,
+        limit: filters.limit ?? 24,
+      })}`,
+    );
+    return {
+      ...data,
+      items: data.items.filter(isLiveCatalogOpportunity),
+    };
+  },
+);
 
 export const loadDiscussion = cache(async (id: string) => {
   return serverApi<Discussion>(`/community/${id}`);

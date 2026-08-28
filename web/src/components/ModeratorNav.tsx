@@ -4,6 +4,7 @@ const links = [
   { href: "/moderation/insights", label: "Insights" },
   { href: "/moderation", label: "Triage" },
   { href: "/moderation/opportunities", label: "Opportunities" },
+  { href: "/moderation/ingestion", label: "Ingestion" },
 ];
 
 export function ModeratorNav({ current }: { current: string }) {

@@ -99,10 +99,22 @@ export function OpportunityCard({
         <p className="eyebrow text-foreground">Listing</p>
         <div className="flex flex-wrap gap-x-4 gap-y-1">
           {item.sourceLabel && <span>{item.sourceLabel}</span>}
+          {item.lastVerifiedAt && (
+            <span>Verified {formatRelativeTime(item.lastVerifiedAt)}</span>
+          )}
           {pay && <span>{pay}</span>}
           {item.remoteType && <span>{humanize(item.remoteType)}</span>}
-          {countries && <span>{countries}</span>}
+          {item.countryLabel && <span>{item.countryLabel}</span>}
+          {!item.countryLabel && item.locationText && (
+            <span>{item.locationText}</span>
+          )}
+          {!item.countryLabel && !item.locationText && countries && (
+            <span>{countries}</span>
+          )}
         </div>
+        {item.discoveryNote && (
+          <p className="text-xs">{item.discoveryNote}</p>
+        )}
         {domainNames.length > 0 && <p>Domain: {domainNames.join(", ")}</p>}
         {skillNames.length > 0 && <p>Skills: {skillNames.join(", ")}</p>}
         {item.lastVerifiedAt && (
@@ -152,8 +164,20 @@ export function OpportunityCard({
 
       {showMatch && why.length > 0 && (
         <p className="text-sm text-muted">
-          <span className="font-medium text-foreground">Why you match </span>
+          <span className="font-medium text-foreground">Your TaskMatch </span>
+          {item.candidateMatch?.score != null && (
+            <span className="num font-semibold text-foreground">
+              {item.candidateMatch.score}% estimated fit
+            </span>
+          )}{" "}
           {why.map((r) => r.text).join(" · ")}
+        </p>
+      )}
+      {!personalized && (
+        <p className="text-sm text-muted">
+          <Link href="/login" className="font-semibold text-accent">
+            See how this opportunity fits your profile
+          </Link>
         </p>
       )}
 
@@ -165,10 +189,16 @@ export function OpportunityCard({
           {personalized ? "View match" : "View opportunity"}
         </Link>
         <Link
+          href={`/companies/${item.company.slug}`}
+          className="btn btn-secondary min-h-11"
+        >
+          Company intelligence
+        </Link>
+        <Link
           href={`/taskmatch/opportunities/${item.slug}#how-to-apply`}
           className="btn btn-secondary min-h-11"
         >
-          How to apply
+          Apply
         </Link>
       </div>
     </article>

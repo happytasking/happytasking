@@ -1,0 +1,20 @@
+[Unit]
+Description=Happy Tasking hourly opportunity sync
+After=network-online.target postgresql.service happytasking-api.service
+Wants=network-online.target postgresql.service
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=/root/happytasking/server
+EnvironmentFile=/root/happytasking/server/.env
+Environment=INVOCATION_ID=systemd
+ExecStart=/root/.nvm/versions/node/v24.16.0/bin/node /root/happytasking/server/dist/jobs/syncOpportunities.js --trigger=cron
+Nice=10
+TimeoutStartSec=50min
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=happytasking-opportunities-sync
+
+[Install]
+WantedBy=multi-user.target
