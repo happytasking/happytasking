@@ -57,11 +57,11 @@ export function newestTimestamp(input: {
 }
 
 export function isNewListing(
-  firstSeenAt: Date | string | null | undefined,
+  publishedAt: Date | string | null | undefined,
   now = Date.now(),
 ): boolean {
-  if (!firstSeenAt) return false;
-  const ts = new Date(firstSeenAt).getTime();
+  if (!publishedAt) return false;
+  const ts = new Date(publishedAt).getTime();
   if (Number.isNaN(ts)) return false;
   return now - ts < 24 * 60 * 60 * 1000;
 }

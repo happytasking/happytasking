@@ -490,7 +490,7 @@ function scoreOpportunity(
     ),
     workType: opp.workType,
     workLabel: workTypeLabel(opp.workType),
-    isNew: isNewListing(opp.firstSeenAt),
+    isNew: isNewListing(opp.publishedAt),
     domains: opp.domains.map((d) => d.domain),
     skills: opp.skills.map((s) => ({
       ...s.skill,

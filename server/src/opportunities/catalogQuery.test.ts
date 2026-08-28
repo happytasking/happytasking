@@ -48,7 +48,7 @@ function testNewestIgnoresVerified() {
   );
 }
 
-function testNewBadgeUsesFirstSeen() {
+function testNewBadgeUsesPublishedAt() {
   const now = Date.parse("2026-08-28T12:00:00.000Z");
   assert.equal(isNewListing("2026-08-28T01:00:00.000Z", now), true);
   assert.equal(isNewListing("2026-08-20T01:00:00.000Z", now), false);
@@ -65,6 +65,6 @@ testInvalidCountryIsIgnored();
 testWorkTypeAndSearch();
 testPaySortIsHourlyOnly();
 testNewestIgnoresVerified();
-testNewBadgeUsesFirstSeen();
+testNewBadgeUsesPublishedAt();
 testRecommendedIgnoresMissingMatch();
 console.log("catalogQuery.test.ts ok");

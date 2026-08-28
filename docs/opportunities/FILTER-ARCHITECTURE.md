@@ -43,7 +43,11 @@ Debounced 300ms in the client. Server uses Prisma `contains` (case
 insensitive). Fine at ~1,500 rows; add a GIN/trgm index only if the catalog
 grows toward 50k+.
 
-## Indexes (additive)
+## NEW badge
+
+`publishedAt` within 24 hours. Listings without a source published date do not
+inherit Happy Tasking's ingest timestamp as "NEW" — that would have marked the
+entire first catalog as new.
 
 - `(countryEligibility, status, isDemo)`
 - `(status, isDemo, publishedAt)`

@@ -63,6 +63,7 @@ Studies & Surveys.
 - `highlight` pay class
 - `pay.*` platform typical rates
 - `partner` / `applySponsored` as quality or ranking signals
-- Decorative “NEW” from their UI (we use our `firstSeenAt` < 24h)
+- A "NEW" badge uses source `publishedAt` within 24 hours. Happy Tasking ingest
+time is not treated as a posting date.
 
 See `COUNTRY-ELIGIBILITY.md` for country semantics.

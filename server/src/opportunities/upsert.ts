@@ -155,7 +155,7 @@ export async function upsertNormalizedOpportunities(
         where: { id: prev.id },
         data: {
           ...payload,
-          firstSeenAt: prev.firstSeenAt ?? now,
+          firstSeenAt: prev.firstSeenAt ?? record.sourceFirstSeenAt ?? now,
           publishedAt: prev.publishedAt ?? publishedAt,
           sourceType:
             labels.sourceType === "PUBLIC_LISTING" || prev.sourceType === "PUBLIC_LISTING"
@@ -175,7 +175,7 @@ export async function upsertNormalizedOpportunities(
         data: {
           ...payload,
           slug,
-          firstSeenAt: now,
+          firstSeenAt: record.sourceFirstSeenAt ?? now,
           domains: domainId ? { create: [{ domainId }] } : undefined,
         },
       });
@@ -199,7 +199,7 @@ export async function upsertNormalizedOpportunities(
             where: { id: existing.id },
             data: {
               ...payload,
-              firstSeenAt: existing.firstSeenAt ?? now,
+              firstSeenAt: existing.firstSeenAt ?? record.sourceFirstSeenAt ?? now,
               publishedAt: existing.publishedAt ?? publishedAt,
               sourceType:
                 labels.sourceType === "PUBLIC_LISTING" ||
@@ -223,7 +223,7 @@ export async function upsertNormalizedOpportunities(
         data: {
           ...payload,
           slug: retrySlug,
-          firstSeenAt: now,
+          firstSeenAt: record.sourceFirstSeenAt ?? now,
           domains: domainId ? { create: [{ domainId }] } : undefined,
         },
       });
