@@ -113,15 +113,14 @@ export function TaskMatchFilters({
           />
         </label>
         <p className="text-sm text-muted">
-          {resultCopy({
+          {`${resultCopy({
             shown,
             total,
             country,
             workType,
             companyName,
             includeUnspecified,
-          })}
-          . Open jobs are not TaskPulse.
+          })}. Open jobs are not TaskPulse.`}
         </p>
       </div>
 
