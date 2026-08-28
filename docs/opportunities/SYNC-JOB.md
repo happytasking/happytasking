@@ -37,6 +37,10 @@ Stale locks expire after 50 minutes.
 - source 180s
 - overall run 40 minutes (timer TimeoutStartSec=50min)
 
+Timeouts are cleared after success so the process exits immediately.
+`--max-records` is for bounded validation only. The hourly timer always
+syncs the full catalog. Do not use a truncated run as production cron.
+
 ## Recovery
 
 If a run is `FAILED`, inspect `OpportunitySyncRun.error` and source health.

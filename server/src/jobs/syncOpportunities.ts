@@ -1,3 +1,4 @@
+import { prisma } from "../lib/prisma.js";
 import { syncOpportunities } from "../opportunities/sync.js";
 
 function arg(name: string) {
@@ -9,24 +10,28 @@ function arg(name: string) {
 const maxRecords = arg("max-records") ? Number(arg("max-records")) : undefined;
 const trigger = arg("trigger") || (process.env.INVOCATION_ID ? "cron" : "manual");
 
-const outcome = await syncOpportunities({
-  trigger,
-  maxRecords: Number.isFinite(maxRecords) ? maxRecords : undefined,
-  holder: trigger,
-});
+try {
+  const outcome = await syncOpportunities({
+    trigger,
+    maxRecords: Number.isFinite(maxRecords) ? maxRecords : undefined,
+    holder: trigger,
+  });
 
-console.log(
-  JSON.stringify(
-    {
-      skippedLocked: outcome.skippedLocked,
-      runId: outcome.runId,
-      status: outcome.status,
-      durationMs: outcome.durationMs,
-      sources: outcome.sources,
-    },
-    null,
-    2,
-  ),
-);
+  console.log(
+    JSON.stringify(
+      {
+        skippedLocked: outcome.skippedLocked,
+        runId: outcome.runId,
+        status: outcome.status,
+        durationMs: outcome.durationMs,
+        sources: outcome.sources,
+      },
+      null,
+      2,
+    ),
+  );
 
-if (outcome.status === "FAILED") process.exitCode = 1;
+  if (outcome.status === "FAILED") process.exitCode = 1;
+} finally {
+  await prisma.$disconnect();
+}

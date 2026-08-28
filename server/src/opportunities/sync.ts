@@ -10,6 +10,7 @@ import {
   type SourceMetrics,
 } from "./types.js";
 import { seenExternalIds, upsertNormalizedOpportunities } from "./upsert.js";
+import { withTimeout } from "./timeout.js";
 
 export type SyncOptions = {
   trigger?: string;
@@ -46,15 +47,11 @@ async function runPipeline(opts: SyncOptions): Promise<SyncOutcome> {
         where: { key: AITRAINING_JOBS_SOURCE_KEY },
         data: { lastAttemptAt: new Date() },
       });
-      const fetched = await Promise.race([
+      const fetched = await withTimeout(
         adapter.fetch({ maxRecords: opts.maxRecords }),
-        new Promise<never>((_, reject) => {
-          setTimeout(
-            () => reject(new Error("AITraining.jobs adapter timeout")),
-            env.OPPORTUNITY_SYNC_SOURCE_TIMEOUT_MS,
-          );
-        }),
-      ]);
+        env.OPPORTUNITY_SYNC_SOURCE_TIMEOUT_MS,
+        "AITraining.jobs adapter timeout",
+      );
       const upserted = await upsertNormalizedOpportunities(fetched.records);
       const lifecycle = await reconcileLifecycle({
         sourceKey: AITRAINING_JOBS_SOURCE_KEY,
@@ -167,15 +164,11 @@ export async function syncOpportunities(opts: SyncOptions = {}): Promise<SyncOut
   }
 
   const locked = await withOpportunitySyncLock(opts.holder || opts.trigger || "sync", async () => {
-    return Promise.race([
+    return withTimeout(
       runPipeline(opts),
-      new Promise<never>((_, reject) => {
-        setTimeout(
-          () => reject(new Error("Opportunity sync exceeded run timeout")),
-          env.OPPORTUNITY_SYNC_RUN_TIMEOUT_MS,
-        );
-      }),
-    ]);
+      env.OPPORTUNITY_SYNC_RUN_TIMEOUT_MS,
+      "Opportunity sync exceeded run timeout",
+    );
   });
 
   if (locked.skipped) {
