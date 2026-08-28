@@ -5,12 +5,13 @@ import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { api, qs } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { useSoftQuery } from "@/lib/useSoftQuery";
-import type { Domain, Skill, SkillGapResult, TaskMatchList } from "@/lib/types";
+import type { Skill, SkillGapResult, TaskMatchList } from "@/lib/types";
 import { EmptyState } from "@/components/EmptyState";
 import { ErrorNote } from "@/components/ErrorNote";
 import { SkeletonCards } from "@/components/Skeleton";
 import { OpportunityCard } from "@/components/taskmatch/OpportunityCard";
 import { ProfileStrength } from "@/components/taskmatch/ProfileStrength";
+import { TaskMatchFilters } from "@/components/taskmatch/TaskMatchFilters";
 import { TaskMatchLanding } from "@/components/taskmatch/TaskMatchLanding";
 import { formatMoney } from "@/lib/format";
 import { TASKMATCH_H1 } from "@/lib/taskmatchLanding";
@@ -19,7 +20,6 @@ function Dashboard() {
   const { searchParams, setQuery } = useSoftQuery();
   const [data, setData] = useState<TaskMatchList | null>(null);
   const [gaps, setGaps] = useState<SkillGapResult | null>(null);
-  const [domains, setDomains] = useState<Domain[]>([]);
   const [skills, setSkills] = useState<Skill[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -30,6 +30,8 @@ function Dashboard() {
       skill: searchParams.get("skill") || "",
       company: searchParams.get("company") || "",
       country: searchParams.get("country") || "",
+      workType: searchParams.get("workType") || "",
+      q: searchParams.get("q") || "",
       remote: searchParams.get("remote") || "",
       includeUnspecified: searchParams.get("includeUnspecified") || "",
       pulse: searchParams.get("pulse") || "",
@@ -50,6 +52,8 @@ function Dashboard() {
           skill: filters.skill || undefined,
           company: filters.company || undefined,
           country: filters.country || undefined,
+          workType: filters.workType || undefined,
+          q: filters.q || undefined,
           remote: filters.remote || undefined,
           includeUnspecified: filters.includeUnspecified || undefined,
           pulse: filters.pulse || undefined,
@@ -71,9 +75,6 @@ function Dashboard() {
   }, [load]);
 
   useEffect(() => {
-    void api<Domain[]>("/companies/meta/domains")
-      .then(setDomains)
-      .catch(() => setDomains([]));
     void api<Skill[]>("/companies/meta/skills")
       .then(setSkills)
       .catch(() => setSkills([]));
@@ -102,141 +103,86 @@ function Dashboard() {
         />
       )}
 
-      <section className="panel panel-pad grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <label className="space-y-1" htmlFor="taskmatch-domain">
-          <span className="label">Domain</span>
-          <select
-            id="taskmatch-domain"
-            className="select"
-            value={filters.domain}
-            onChange={(e) => setQuery({ domain: e.target.value || null, page: null })}
-          >
-            <option value="">All domains</option>
-            {domains.map((d) => (
-              <option key={d.id} value={d.slug}>
-                {d.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="space-y-1" htmlFor="taskmatch-skill">
-          <span className="label">Skill</span>
-          <select
-            id="taskmatch-skill"
-            className="select"
-            value={filters.skill}
-            onChange={(e) => setQuery({ skill: e.target.value || null })}
-          >
-            <option value="">All skills</option>
-            {skills.map((s) => (
-              <option key={s.id} value={s.slug}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="space-y-1" htmlFor="taskmatch-sort">
-          <span className="label">Sort</span>
-          <select
-            id="taskmatch-sort"
-            className="select"
-            value={filters.sort}
-            onChange={(e) => setQuery({ sort: e.target.value })}
-          >
-            <option value="recommended">Recommended</option>
-            <option value="match">Best match</option>
-            {hasIntel && <option value="quality">Best opportunity quality</option>}
-            <option value="pay">Highest pay</option>
-            {hasIntel && <option value="taskscore">Best TaskScore</option>}
-            <option value="newest">Newest</option>
-            <option value="recent">Recent</option>
-            <option value="verified">Recently verified</option>
-          </select>
-        </label>
-        {hasIntel && (
-          <label className="space-y-1" htmlFor="taskmatch-pulse">
-            <span className="label">Contributor task availability</span>
-            <select
-              id="taskmatch-pulse"
-              className="select"
-              value={filters.pulse}
-              onChange={(e) => setQuery({ pulse: e.target.value || null })}
-            >
-              <option value="">Any reported availability</option>
-              <option value="HIGH">High</option>
-              <option value="MODERATE">Moderate</option>
-              <option value="LOW">Low</option>
-              <option value="NO_TASKS">No tasks</option>
-            </select>
-          </label>
-        )}
-        {hasIntel && (
-          <label className="space-y-1" htmlFor="taskmatch-minscore">
-            <span className="label">Minimum TaskScore</span>
-            <select
-              id="taskmatch-minscore"
-              className="select"
-              value={filters.minTaskScore}
-              onChange={(e) => setQuery({ minTaskScore: e.target.value || null })}
-            >
-              <option value="">Any</option>
-              <option value="60">60+</option>
-              <option value="70">70+</option>
-              <option value="80">80+</option>
-            </select>
-          </label>
-        )}
-        <label className="space-y-1" htmlFor="taskmatch-country">
-          <span className="label">Country</span>
-          <select
-            id="taskmatch-country"
-            className="select"
-            value={filters.country}
-            onChange={(e) => setQuery({ country: e.target.value || null })}
-          >
-            <option value="">All countries</option>
-            <option value="BR">Brazil</option>
-            <option value="US">United States</option>
-          </select>
-        </label>
-        {filters.country ? (
-          <label className="flex items-end gap-2 pb-2 text-sm" htmlFor="taskmatch-unspecified">
-            <input
-              id="taskmatch-unspecified"
-              type="checkbox"
-              checked={filters.includeUnspecified === "true"}
-              onChange={(e) =>
-                setQuery({
-                  includeUnspecified: e.target.checked ? "true" : null,
-                })
-              }
-            />
-            Include opportunities with unspecified location
-          </label>
-        ) : null}
-        <label className="flex items-end gap-2 pb-2 text-sm" htmlFor="taskmatch-remote">
-          <input
-            id="taskmatch-remote"
-            type="checkbox"
-            checked={filters.remote === "true"}
-            onChange={(e) =>
-              setQuery({ remote: e.target.checked ? "true" : null })
-            }
-          />
-          Remote listed
-        </label>
-        <label className="flex items-end gap-2 pb-2 text-sm" htmlFor="taskmatch-worked">
-          <input
-            id="taskmatch-worked"
-            type="checkbox"
-            checked={filters.includeWorkedWith === "true"}
-            onChange={(e) =>
-              setQuery({ includeWorkedWith: e.target.checked ? "true" : "false" })
-            }
-          />
-          Include companies I have worked with
-        </label>
-      </section>
+      <TaskMatchFilters
+        shown={data?.items.length ?? 0}
+        total={data?.total ?? data?.items.length ?? 0}
+        facets={data?.facets}
+        personalized
+        hasIntel={hasIntel}
+        extra={
+          <details className="rounded-[var(--radius)] border border-border bg-surface-2 px-4 py-3">
+            <summary className="cursor-pointer text-sm font-semibold">
+              More filters
+            </summary>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <label className="space-y-1" htmlFor="taskmatch-skill">
+                <span className="label">Skill</span>
+                <select
+                  id="taskmatch-skill"
+                  className="select"
+                  value={filters.skill}
+                  onChange={(e) => setQuery({ skill: e.target.value || null })}
+                >
+                  <option value="">All skills</option>
+                  {skills.map((s) => (
+                    <option key={s.id} value={s.slug}>
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {hasIntel && (
+                <label className="space-y-1" htmlFor="taskmatch-pulse">
+                  <span className="label">Contributor task availability</span>
+                  <select
+                    id="taskmatch-pulse"
+                    className="select"
+                    value={filters.pulse}
+                    onChange={(e) => setQuery({ pulse: e.target.value || null })}
+                  >
+                    <option value="">Any reported availability</option>
+                    <option value="HIGH">High</option>
+                    <option value="MODERATE">Moderate</option>
+                    <option value="LOW">Low</option>
+                    <option value="NO_TASKS">No tasks</option>
+                  </select>
+                </label>
+              )}
+              {hasIntel && (
+                <label className="space-y-1" htmlFor="taskmatch-minscore">
+                  <span className="label">Minimum TaskScore</span>
+                  <select
+                    id="taskmatch-minscore"
+                    className="select"
+                    value={filters.minTaskScore}
+                    onChange={(e) =>
+                      setQuery({ minTaskScore: e.target.value || null })
+                    }
+                  >
+                    <option value="">Any</option>
+                    <option value="60">60+</option>
+                    <option value="70">70+</option>
+                    <option value="80">80+</option>
+                  </select>
+                </label>
+              )}
+              <label className="flex items-end gap-2 pb-2 text-sm" htmlFor="taskmatch-worked">
+                <input
+                  id="taskmatch-worked"
+                  type="checkbox"
+                  checked={filters.includeWorkedWith === "true"}
+                  onChange={(e) =>
+                    setQuery({
+                      includeWorkedWith: e.target.checked ? "true" : "false",
+                    })
+                  }
+                />
+                Include companies I have worked with
+              </label>
+            </div>
+          </details>
+        }
+      />
 
       {error && <ErrorNote message={error} onRetry={() => void load()} />}
 
@@ -303,7 +249,13 @@ function Dashboard() {
 function TaskMatchPage({ initial }: { initial: TaskMatchList }) {
   const { user } = useAuth();
   if (user) return <Dashboard />;
-  return <TaskMatchLanding opportunities={initial.items} total={initial.total} />;
+  return (
+    <TaskMatchLanding
+      opportunities={initial.items}
+      total={initial.total}
+      facets={initial.facets}
+    />
+  );
 }
 
 export default function Page({ initial }: { initial: TaskMatchList }) {

@@ -1,4 +1,9 @@
 import { prisma } from "../lib/prisma.js";
+import {
+  resolveCompanyLogoUrl,
+  resolveCompanyWebsite,
+} from "./logos.js";
+import { WORK_TYPE_DOMAIN } from "./workTypes.js";
 
 export const PLATFORM_SLUG_ALIASES: Record<string, string> = {
   micro1: "micro1",
@@ -22,20 +27,6 @@ export const PLATFORM_SLUG_ALIASES: Record<string, string> = {
   prolific: "prolific",
 };
 
-const WORK_TYPE_DOMAIN: Record<string, string> = {
-  coding: "coding",
-  "stem-math": "science",
-  "domain-expert": "other",
-  "rlhf-eval": "generalist",
-  "data-labeling": "data-annotation",
-  writing: "writing",
-  multilingual: "translation",
-  "audio-speech": "other",
-  "red-teaming": "research",
-  "agentic-eval": "coding",
-  "research-studies": "research",
-};
-
 function slugifyName(value: string) {
   return value
     .toLowerCase()
@@ -55,13 +46,27 @@ export async function resolveCompany(input: {
 }) {
   const slug = canonicalCompanySlug(input.slugHint, input.name);
   const existing = await prisma.company.findUnique({ where: { slug } });
+  const website = resolveCompanyWebsite(
+    slug,
+    existing?.website || input.website,
+  );
+  const logoUrl = resolveCompanyLogoUrl({
+    slug,
+    existing: existing?.logoUrl,
+    website,
+  });
   if (existing) {
-    if (existing.isDemo) {
+    const needsUpdate =
+      existing.isDemo ||
+      (!existing.website && website) ||
+      (!existing.logoUrl && logoUrl);
+    if (needsUpdate) {
       return prisma.company.update({
         where: { id: existing.id },
         data: {
-          isDemo: false,
-          website: existing.website || input.website || existing.website,
+          ...(existing.isDemo ? { isDemo: false } : {}),
+          website: existing.website || website,
+          logoUrl: existing.logoUrl || logoUrl,
         },
       });
     }
@@ -73,7 +78,8 @@ export async function resolveCompany(input: {
       slug,
       name: input.name,
       description,
-      website: input.website,
+      website,
+      logoUrl,
       isDemo: false,
       companyStatus: "ACTIVE",
     },

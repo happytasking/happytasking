@@ -50,6 +50,9 @@ export type AiTrainingRoleRow = {
   first_seen_at: string | null;
   applyHref: string | null;
   applySponsored?: boolean;
+  applyRel?: string | null;
+  partner?: boolean;
+  highlight?: string | null;
   pay?: { payLow?: number; payHigh?: number } | null;
 };
 

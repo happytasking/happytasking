@@ -95,6 +95,13 @@ export const publicEventSchema = z.object({
     "taskmatch_personalize_clicked",
     "opportunity_apply_clicked",
     "referral_apply_clicked",
+    "taskmatch_search_used",
+    "taskmatch_country_changed",
+    "taskmatch_category_changed",
+    "taskmatch_company_changed",
+    "taskmatch_remote_toggled",
+    "taskmatch_sort_changed",
+    "opportunity_card_opened",
   ]),
   sessionId: z.string().min(8).max(80).optional(),
 });

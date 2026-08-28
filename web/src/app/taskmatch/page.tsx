@@ -21,6 +21,8 @@ export default async function Page({
     remote: firstQuery(sp.remote),
     includeUnspecified: firstQuery(sp.includeUnspecified),
     sort: firstQuery(sp.sort) || "newest",
+    q: firstQuery(sp.q),
+    workType: firstQuery(sp.workType),
   });
   return (
     <>

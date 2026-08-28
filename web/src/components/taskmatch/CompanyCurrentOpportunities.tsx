@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import type { OpportunityCard } from "@/lib/types";
 import { isLiveCatalogOpportunity } from "@/lib/taskmatchLanding";
+import { OpportunityTeaserCard } from "./OpportunityTeaserCard";
 
 export function CompanyCurrentOpportunities({
   slug,
@@ -34,18 +35,11 @@ export function CompanyCurrentOpportunities({
           Public recruiting listings for {name}. Open jobs are not TaskPulse.
         </p>
       </div>
-      <ul className="space-y-2">
+      <div className="grid gap-3">
         {items.slice(0, 8).map((item) => (
-          <li key={item.id}>
-            <Link
-              href={`/taskmatch/opportunities/${item.slug}`}
-              className="font-medium hover:text-accent"
-            >
-              {item.title}
-            </Link>
-          </li>
+          <OpportunityTeaserCard key={item.id} item={item} />
         ))}
-      </ul>
+      </div>
       <Link
         href={`/taskmatch?company=${slug}`}
         className="text-sm font-semibold text-accent"

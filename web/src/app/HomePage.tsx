@@ -13,6 +13,7 @@ import type {
   Review,
   Skill,
 } from "@/lib/types";
+import { OpportunityTeaserCard } from "@/components/taskmatch/OpportunityTeaserCard";
 import { LiveMarketTable } from "@/components/LiveMarketTable";
 import { CompanyLogo } from "@/components/CompanyLogo";
 import { LinkableRow } from "@/components/LinkableRow";
@@ -188,7 +189,7 @@ export default function HomePage({ initial }: { initial: HomePageData }) {
         <section>
           <SectionHeader
             title="AI work opportunities"
-            description="Explore current AI training and evaluation work."
+            description="Latest verified opportunities across AI training, evaluation and expert work."
             actionHref="/taskmatch"
             actionLabel="Explore all opportunities"
           />
@@ -202,27 +203,7 @@ export default function HomePage({ initial }: { initial: HomePageData }) {
           ) : (
             <div className="grid gap-3 md:grid-cols-2">
               {opportunities.slice(0, 8).map((item) => (
-                <Link
-                  key={item.id}
-                  href={`/taskmatch/opportunities/${item.slug}`}
-                  className="panel panel-pad hover:border-accent"
-                >
-                  <p className="text-sm font-semibold">{item.title}</p>
-                  <p className="mt-1 text-sm text-muted">{item.company.name}</p>
-                  <p className="mt-2 text-xs text-muted">
-                    {item.minRate != null
-                      ? `${formatMoney(item.minRate, item.currency)}${
-                          item.maxRate != null && item.maxRate !== item.minRate
-                            ? `–${formatMoney(item.maxRate, item.currency)}`
-                            : ""
-                        }/h`
-                      : "Pay not listed"}
-                    {item.remoteType ? ` · ${humanize(item.remoteType)}` : ""}
-                    {item.lastVerifiedAt
-                      ? ` · Verified ${formatDate(item.lastVerifiedAt)}`
-                      : ""}
-                  </p>
-                </Link>
+                <OpportunityTeaserCard key={item.id} item={item} />
               ))}
             </div>
           )}

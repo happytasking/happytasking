@@ -584,6 +584,87 @@ a.chip:hover {
   color: var(--accent);
 }
 
+button.chip {
+  cursor: pointer;
+  background: var(--surface);
+  font-family: inherit;
+}
+
+button.chip:hover {
+  border-color: var(--border-strong);
+  color: var(--foreground);
+}
+
+button.chip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+button.chip[aria-pressed="true"],
+button.chip.chip-accent {
+  background: var(--accent-soft);
+  border-color: transparent;
+  color: var(--accent);
+}
+
+.filter-scroll {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+  scrollbar-width: thin;
+}
+
+.discovery-sticky {
+  position: sticky;
+  top: 4rem;
+  z-index: 20;
+  margin-left: -0.25rem;
+  margin-right: -0.25rem;
+  padding: 0.75rem 0.25rem 0.5rem;
+  background: color-mix(in srgb, var(--background) 88%, transparent);
+  backdrop-filter: blur(10px);
+}
+
+.pay-badge {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.1rem;
+  padding: 0.45rem 0.7rem;
+  border-radius: var(--radius);
+  background: var(--accent-soft);
+  color: var(--brand-navy);
+  line-height: 1.1;
+  text-align: right;
+}
+
+.pay-badge .pay-amount {
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.pay-badge .pay-unit {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: lowercase;
+  color: var(--accent);
+}
+
+.pay-badge-compact {
+  align-items: flex-start;
+  text-align: left;
+}
+
+.pay-badge-compact .pay-amount {
+  font-size: 1.05rem;
+}
+
+.opportunity-teaser {
+  display: block;
+}
+
 .badge {
   display: inline-flex;
   align-items: center;

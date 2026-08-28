@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { useEffect } from "react";
-import type { OpportunityCard as Card } from "@/lib/types";
+import type { OpportunityCard as Card, TaskMatchFacets } from "@/lib/types";
 import { EmptyState } from "@/components/EmptyState";
 import { OpportunityCard } from "@/components/taskmatch/OpportunityCard";
+import { TaskMatchFilters } from "@/components/taskmatch/TaskMatchFilters";
 import { track } from "@/lib/track";
-import { useSoftQuery } from "@/lib/useSoftQuery";
 import {
   TASKMATCH_EMPTY_DESCRIPTION,
   TASKMATCH_EMPTY_TITLE,
@@ -26,16 +26,13 @@ const SUPPORTING = [
 export function TaskMatchLanding({
   opportunities,
   total,
+  facets,
 }: {
   opportunities: Card[];
   total?: number;
+  facets?: TaskMatchFacets;
 }) {
-  const { searchParams, setQuery } = useSoftQuery();
   const catalog = opportunities.filter(isLiveCatalogOpportunity);
-  const country = searchParams.get("country") || "";
-  const sort = searchParams.get("sort") || "newest";
-  const remote = searchParams.get("remote") === "true";
-  const includeUnspecified = searchParams.get("includeUnspecified") === "true";
 
   useEffect(() => {
     track("taskmatch_landing_viewed");
@@ -60,72 +57,11 @@ export function TaskMatchLanding({
 
       <section className="space-y-4">
         <h2 className="section-title">Current opportunities</h2>
-        {typeof total === "number" && total > 0 && (
-          <p className="text-sm text-muted">
-            {catalog.length} shown of {total} tracked active listings.
-            Open jobs are not TaskPulse.
-          </p>
-        )}
-        <div className="flex flex-wrap gap-3">
-          <label className="space-y-1" htmlFor="landing-country">
-            <span className="label">Country</span>
-            <select
-              id="landing-country"
-              className="select"
-              value={country}
-              onChange={(e) => setQuery({ country: e.target.value || null })}
-            >
-              <option value="">All countries</option>
-              <option value="BR">Brazil</option>
-              <option value="US">United States</option>
-            </select>
-          </label>
-          <label className="space-y-1" htmlFor="landing-sort">
-            <span className="label">Sort</span>
-            <select
-              id="landing-sort"
-              className="select"
-              value={sort}
-              onChange={(e) => setQuery({ sort: e.target.value })}
-            >
-              <option value="newest">Newest</option>
-              <option value="pay">Highest pay</option>
-              <option value="recommended">Recommended</option>
-            </select>
-          </label>
-          <label className="flex items-end gap-2 pb-2 text-sm" htmlFor="landing-remote">
-            <input
-              id="landing-remote"
-              type="checkbox"
-              checked={remote}
-              onChange={(e) =>
-                setQuery({ remote: e.target.checked ? "true" : null })
-              }
-            />
-            Remote
-          </label>
-        </div>
-        {country ? (
-          <label className="flex items-center gap-2 text-sm" htmlFor="landing-unspecified">
-            <input
-              id="landing-unspecified"
-              type="checkbox"
-              checked={includeUnspecified}
-              onChange={(e) =>
-                setQuery({
-                  includeUnspecified: e.target.checked ? "true" : null,
-                })
-              }
-            />
-            Include opportunities with unspecified location
-          </label>
-        ) : null}
-        <p className="text-xs text-muted">
-          Remote does not automatically mean a country is eligible. Default
-          country results are confirmed worldwide or explicitly listed
-          countries. Unspecified location is opt-in and is never labeled
-          eligible.
-        </p>
+        <TaskMatchFilters
+          shown={catalog.length}
+          total={total ?? catalog.length}
+          facets={facets}
+        />
         {catalog.length > 0 ? (
           <>
             <p className="text-sm text-muted">

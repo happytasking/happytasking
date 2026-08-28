@@ -24,7 +24,17 @@ import {
   publicOpportunityCatalogWhere,
 } from "../lib/taskmatchPublic.js";
 import { resolveApplicationDestination } from "../opportunities/referrals.js";
-import { brazilEligibleLabel } from "../opportunities/country.js";
+import { countryEligibleLabel } from "../opportunities/country.js";
+import {
+  comparablePaySortValue,
+  isNewListing,
+  newestTimestamp,
+  normalizeCountryParam,
+  normalizeSearchQuery,
+  normalizeWorkTypeParam,
+  recommendedRank,
+} from "../opportunities/catalogQuery.js";
+import { SOURCE_WORK_TYPES, workTypeLabel } from "../opportunities/workTypes.js";
 
 const lookingEnum = z.enum(["READY", "OPEN_TO_OFFERS", "NOT_LOOKING"]);
 const workloadEnum = z.enum([
@@ -93,6 +103,8 @@ export const matchQuerySchema = z.object({
   skill: z.string().optional(),
   company: z.string().optional(),
   country: z.string().optional(),
+  workType: z.string().optional(),
+  q: z.string().max(120).optional(),
   remote: z.enum(["true", "false"]).optional(),
   pulse: z.enum(["HIGH", "MODERATE", "LOW", "NO_TASKS"]).optional(),
   minTaskScore: z.coerce.number().min(0).max(100).optional(),
@@ -396,6 +408,7 @@ function scoreOpportunity(
   profile: Awaited<ReturnType<typeof loadCandidateProfile>> | null,
   weights: MatchWeights,
   savedIds: Set<string>,
+  requestedCountry?: string,
 ) {
   const candidate = profile
     ? computeCandidateMatch(
@@ -468,11 +481,16 @@ function scoreOpportunity(
     locationText: opp.locationText,
     countryRestrictions: opp.countryRestrictions,
     countryEligibility: opp.countryEligibility,
-    countryLabel: brazilEligibleLabel({
-      eligibility: opp.countryEligibility,
-      codes: opp.countryRestrictions,
-    }),
+    countryLabel: countryEligibleLabel(
+      {
+        eligibility: opp.countryEligibility,
+        codes: opp.countryRestrictions,
+      },
+      requestedCountry,
+    ),
     workType: opp.workType,
+    workLabel: workTypeLabel(opp.workType),
+    isNew: isNewListing(opp.firstSeenAt),
     domains: opp.domains.map((d) => d.domain),
     skills: opp.skills.map((s) => ({
       ...s.skill,
@@ -500,6 +518,145 @@ function scoreOpportunity(
   };
 }
 
+function catalogWhereFromQuery(
+  query: z.infer<typeof matchQuerySchema>,
+  opts: { omitCompany?: boolean; omitWorkType?: boolean; omitCountry?: boolean } = {},
+) {
+  const country = opts.omitCountry
+    ? undefined
+    : normalizeCountryParam(query.country);
+  const workType = opts.omitWorkType
+    ? undefined
+    : normalizeWorkTypeParam(query.workType);
+  const q = normalizeSearchQuery(query.q);
+  const clauses: object[] = [];
+  if (q) {
+    clauses.push({
+      OR: [
+        { title: { contains: q, mode: "insensitive" as const } },
+        { locationText: { contains: q, mode: "insensitive" as const } },
+        { workType: { contains: q, mode: "insensitive" as const } },
+        { summary: { contains: q, mode: "insensitive" as const } },
+        { company: { name: { contains: q, mode: "insensitive" as const } } },
+        {
+          skills: {
+            some: { skill: { name: { contains: q, mode: "insensitive" as const } } },
+          },
+        },
+        {
+          domains: {
+            some: { domain: { name: { contains: q, mode: "insensitive" as const } } },
+          },
+        },
+      ],
+    });
+  }
+  if (country) {
+    clauses.push({
+      OR: [
+        { countryEligibility: "GLOBAL" as const },
+        {
+          countryEligibility: "EXPLICIT" as const,
+          countryRestrictions: { has: country },
+        },
+        ...(query.includeUnspecified === "true"
+          ? [{ countryEligibility: "UNSPECIFIED" as const }]
+          : []),
+      ],
+    });
+  }
+  return {
+    ...publicOpportunityCatalogWhere(opts.omitCompany ? undefined : query.company),
+    relevanceStatus: "ACCEPTED" as const,
+    ...(query.domain && !workType
+      ? { domains: { some: { domain: { slug: query.domain } } } }
+      : {}),
+    ...(workType ? { workType } : {}),
+    ...(query.skill
+      ? { skills: { some: { skill: { slug: query.skill } } } }
+      : {}),
+    ...(query.paymentModel ? { paymentModel: query.paymentModel } : {}),
+    ...(query.minRate != null ? { maxRate: { gte: query.minRate } } : {}),
+    ...(query.remote === "true" ? { remoteType: "REMOTE" as const } : {}),
+    ...(clauses.length ? { AND: clauses } : {}),
+  };
+}
+
+async function loadCatalogFacets(query: z.infer<typeof matchQuerySchema>) {
+  const companyWhere = catalogWhereFromQuery(query, { omitCompany: true });
+  const workTypeWhere = catalogWhereFromQuery(query, { omitWorkType: true });
+  const countryWhere = catalogWhereFromQuery(query, { omitCountry: true });
+
+  const [byCompany, byWorkType, countryRows] = await Promise.all([
+    prisma.opportunity.groupBy({
+      by: ["companyId"],
+      where: companyWhere,
+      _count: { _all: true },
+    }),
+    prisma.opportunity.groupBy({
+      by: ["workType"],
+      where: workTypeWhere,
+      _count: { _all: true },
+    }),
+    prisma.opportunity.findMany({
+      where: countryWhere,
+      select: { countryEligibility: true, countryRestrictions: true },
+    }),
+  ]);
+
+  const companies =
+    byCompany.length === 0
+      ? []
+      : (
+          await prisma.company.findMany({
+            where: { id: { in: byCompany.map((row) => row.companyId) } },
+            select: { id: true, slug: true, name: true, logoUrl: true },
+          })
+        )
+          .map((company) => ({
+            slug: company.slug,
+            name: company.name,
+            logoUrl: company.logoUrl,
+            count: byCompany.find((row) => row.companyId === company.id)?._count._all ?? 0,
+          }))
+          .sort((a, b) => b.count - a.count);
+
+  const workTypeCounts = new Map(
+    byWorkType
+      .filter((row) => row.workType)
+      .map((row) => [row.workType as string, row._count._all]),
+  );
+  const workTypes = SOURCE_WORK_TYPES.map((row) => ({
+    key: row.key,
+    label: row.label,
+    chip: row.chip,
+    count: workTypeCounts.get(row.key) ?? 0,
+  }));
+
+  const countryCounts = new Map<string, number>();
+  let globalCount = 0;
+  let unspecifiedCount = 0;
+  for (const row of countryRows) {
+    if (row.countryEligibility === "GLOBAL") globalCount += 1;
+    else if (row.countryEligibility === "UNSPECIFIED") unspecifiedCount += 1;
+    else {
+      for (const code of row.countryRestrictions) {
+        countryCounts.set(code, (countryCounts.get(code) ?? 0) + 1);
+      }
+    }
+  }
+
+  return {
+    companies,
+    workTypes,
+    countries: [...countryCounts.entries()]
+      .map(([code, count]) => ({ code, count }))
+      .sort((a, b) => b.count - a.count),
+    globalCount,
+    unspecifiedCount,
+  };
+}
+
 export async function listMatches(
   userId: string | undefined,
   query: z.infer<typeof matchQuerySchema>,
@@ -507,44 +664,36 @@ export async function listMatches(
 ) {
   const weights = await getWeights();
   const profile = userId ? await loadCandidateProfile(userId) : null;
-
-  const country = query.country?.trim().toUpperCase();
-  const catalogWhere = {
-    ...publicOpportunityCatalogWhere(query.company),
-    relevanceStatus: "ACCEPTED" as const,
-    ...(query.domain
-      ? { domains: { some: { domain: { slug: query.domain } } } }
-      : {}),
-    ...(query.skill
-      ? { skills: { some: { skill: { slug: query.skill } } } }
-      : {}),
-    ...(query.paymentModel ? { paymentModel: query.paymentModel } : {}),
-    ...(query.minRate != null ? { maxRate: { gte: query.minRate } } : {}),
-    ...(query.remote === "true" ? { remoteType: "REMOTE" as const } : {}),
-    ...(country
+  const country = normalizeCountryParam(query.country);
+  const catalogWhere = catalogWhereFromQuery(query);
+  const sort = query.sort === "recent" ? "newest" : query.sort || "recommended";
+  const listWhere =
+    sort === "pay"
       ? {
-          OR: [
-            { countryEligibility: "GLOBAL" as const },
-            {
-              countryEligibility: "EXPLICIT" as const,
-              countryRestrictions: { has: country },
-            },
-            ...(query.includeUnspecified === "true"
-              ? [{ countryEligibility: "UNSPECIFIED" as const }]
-              : []),
-          ],
+          ...catalogWhere,
+          rateUnit: "HOURLY" as const,
+          maxRate: { not: null },
         }
-      : {}),
-  };
+      : catalogWhere;
+  const orderBy =
+    sort === "pay"
+      ? { maxRate: "desc" as const }
+      : sort === "newest"
+        ? [
+            { publishedAt: "desc" as const },
+            { firstSeenAt: "desc" as const },
+          ]
+        : { lastVerifiedAt: "desc" as const };
 
-  const [opportunities, total] = await Promise.all([
+  const [opportunities, total, facets] = await Promise.all([
     prisma.opportunity.findMany({
-      where: catalogWhere,
+      where: listWhere,
       include: opportunityInclude,
-      orderBy: { lastVerifiedAt: "desc" },
+      orderBy,
       take: 250,
     }),
-    prisma.opportunity.count({ where: catalogWhere }),
+    prisma.opportunity.count({ where: listWhere }),
+    loadCatalogFacets(query),
   ]);
 
   const saved = userId
@@ -576,23 +725,37 @@ export async function listMatches(
     if (query.minQuality != null && (intel.quality.score ?? 0) < query.minQuality) {
       continue;
     }
-    rows.push(scoreOpportunity(opp, intel, profile, weights, savedIds));
+    rows.push(
+      scoreOpportunity(opp, intel, profile, weights, savedIds, country),
+    );
   }
 
-  const sort = query.sort === "recent" ? "newest" : query.sort || "recommended";
   rows.sort((a, b) => {
-    const recency = (r: (typeof rows)[number]) =>
-      new Date(r.publishedAt ?? r.lastVerifiedAt ?? 0).getTime();
-    if (sort === "match") return (b.candidateMatch?.score ?? -1) - (a.candidateMatch?.score ?? -1);
-    if (sort === "quality") return (b.opportunityQuality.score ?? -1) - (a.opportunityQuality.score ?? -1);
-    if (sort === "pay") return (b.maxRate ?? -1) - (a.maxRate ?? -1);
+    if (sort === "match") {
+      return (b.candidateMatch?.score ?? -1) - (a.candidateMatch?.score ?? -1);
+    }
+    if (sort === "quality") {
+      return (b.opportunityQuality.score ?? -1) - (a.opportunityQuality.score ?? -1);
+    }
+    if (sort === "pay") {
+      return (
+        comparablePaySortValue(b.rateUnit, b.maxRate) -
+        comparablePaySortValue(a.rateUnit, a.maxRate)
+      );
+    }
     if (sort === "taskscore") return (b.taskScore ?? -1) - (a.taskScore ?? -1);
-    if (sort === "newest") return recency(b) - recency(a);
+    if (sort === "newest") {
+      return newestTimestamp(b) - newestTimestamp(a);
+    }
     if (sort === "verified") return (a.verifiedDaysAgo ?? 99) - (b.verifiedDaysAgo ?? 99);
-    const recRank = (r: (typeof rows)[number]) =>
-      (r.candidateMatch?.score ?? 40) * 0.6 + (r.opportunityQuality.score ?? 40) * 0.4;
-    const ranked = recRank(b) - recRank(a);
-    return ranked !== 0 ? ranked : recency(b) - recency(a);
+    const ranked = recommendedRank({
+      matchScore: b.candidateMatch?.score,
+      qualityScore: b.opportunityQuality.score,
+    }) - recommendedRank({
+      matchScore: a.candidateMatch?.score,
+      qualityScore: a.opportunityQuality.score,
+    });
+    return ranked !== 0 ? ranked : newestTimestamp(b) - newestTimestamp(a);
   });
 
   if (userId && opts.track !== false) {
@@ -602,6 +765,7 @@ export async function listMatches(
   return {
     items: rows.slice(0, query.limit ?? 20),
     total,
+    facets,
     strength: profile?.strength ?? null,
     personalized: Boolean(profile),
     hasCommunityIntelligence: rows.some((row) =>

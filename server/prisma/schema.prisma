@@ -1099,6 +1099,9 @@ model Opportunity {
   @@index([fingerprint])
   @@index([status, isDemo, lastSeenAt])
   @@index([workType, status])
+  @@index([countryEligibility, status, isDemo])
+  @@index([status, isDemo, publishedAt])
+  @@index([status, isDemo, maxRate])
 }
 
 model OpportunitySkill {

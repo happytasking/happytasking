@@ -6,9 +6,15 @@ import {
   StaleFetchRolesActionError,
   SourceDegradedError,
 } from "./aitrainingJobs.js";
+import { parseCountryLocation } from "../country.js";
 
 const FIXTURE = `0:{"a":"$@1","f":"","b":"abc"}
 1:{"rows":[{"id":"0c3d8afd-9ee6-4008-a75b-0dd821d88c87","title":"Hardware Expert","location":null,"remote":true,"work_type":"rlhf-eval","compensation_text":"$$50-$100/hr","platform_slug":"micro1","posted_at":null,"first_seen_at":"2026-08-27T06:01:19.875685+00:00","workLabel":"RLHF / Evaluation","platformName":"micro1","platformLogoDomain":"micro1.ai","pay":{"payLow":44,"payHigh":92,"payUnit":"hour","payDisplay":"$10–$95/hr","name":"micro1","live":true},"applyHref":"https://jobs.micro1.ai/post/5f50767b-8275-4f5a-8861-08e895e0d1e2?referralCode=9bbe0074-9b97-49af-8528-9aacfe094577&utm_source=referral&utm_medium=share&utm_campaign=job_referral","applySponsored":true,"partner":true,"applyRel":"sponsored nofollow noopener","highlight":"Above-average pay"},{"id":"xai-1","title":"AI Tutor - Hausa","location":"Remote United States","remote":true,"work_type":"multilingual","compensation_text":"$35/hour - $45/hour","platform_slug":"xai","posted_at":"2026-08-27T03:12:24+00:00","first_seen_at":"2026-08-08T06:01:14.711271+00:00","workLabel":"Multilingual","platformName":"xAI (SpaceXAI)","platformLogoDomain":"x.ai","pay":{"payLow":40,"payHigh":40},"applyHref":"https://job-boards.greenhouse.io/xai/jobs/5207427007","applySponsored":false}],"total":1666}`;
+
+function testRemoteInternationalNormalizesGlobal() {
+  const parsed = parseCountryLocation("Remote International", true);
+  assert.equal(parsed.eligibility, "GLOBAL");
+}
 
 function testParsesFlightAndIgnoresPlatformPay() {
   const parsed = parseNextActionPayload(FIXTURE);
@@ -26,6 +32,7 @@ function testParsesFlightAndIgnoresPlatformPay() {
   assert.ok(hardware.rawDiscoveryApplicationUrl?.includes("referralCode"));
   assert.equal(hardware.relevance.status, "ACCEPTED");
   assert.equal(hardware.country.eligibility, "UNSPECIFIED");
+  assert.equal(parsed.rows[0].highlight, "Above-average pay");
 }
 
 function testPostedAtIsNotFirstSeen() {
@@ -72,6 +79,7 @@ function testSourceDegradedErrorIsActionable() {
 }
 
 testParsesFlightAndIgnoresPlatformPay();
+testRemoteInternationalNormalizesGlobal();
 testPostedAtIsNotFirstSeen();
 testDiscoversActionId();
 testActionIdChangeIsDiscoveredFromPublicJs();

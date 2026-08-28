@@ -569,6 +569,8 @@ export type OpportunityCard = {
   countryEligibility?: string;
   countryLabel?: string | null;
   workType?: string | null;
+  workLabel?: string | null;
+  isNew?: boolean;
   domains: Domain[];
   skills: (Skill & { required: boolean })[];
   candidateMatch: {
@@ -590,9 +592,23 @@ export type OpportunityCard = {
   saved: boolean;
 };
 
+export type TaskMatchFacets = {
+  companies: {
+    slug: string;
+    name: string;
+    logoUrl: string | null;
+    count: number;
+  }[];
+  workTypes: { key: string; label: string; chip: string; count: number }[];
+  countries: { code: string; count: number }[];
+  globalCount: number;
+  unspecifiedCount: number;
+};
+
 export type TaskMatchList = {
   items: OpportunityCard[];
   total?: number;
+  facets?: TaskMatchFacets;
   strength: {
     percent: number;
     items: { key: string; label: string; done: boolean }[];

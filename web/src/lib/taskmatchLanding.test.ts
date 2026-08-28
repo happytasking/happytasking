@@ -106,6 +106,8 @@ function testSitemapPolicy() {
   assert.ok(paths.includes("/taskmatch"));
   assert.ok(!paths.includes("/jobs"));
   assert.ok(!paths.includes("/ai-training-jobs"));
+  assert.ok(!paths.includes("/jobs/brazil"));
+  assert.ok(!paths.includes("/taskmatch/brazil"));
   assert.ok(!paths.includes("/taskmatch/remote"));
   assert.ok(!paths.includes("/taskmatch/coding"));
   assert.ok(!paths.includes("/taskmatch/evaluator"));

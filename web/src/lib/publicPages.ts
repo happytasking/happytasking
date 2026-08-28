@@ -130,6 +130,8 @@ export const loadPublicTaskMatch = cache(
       includeUnspecified?: string;
       sort?: string;
       limit?: number;
+      q?: string;
+      workType?: string;
     } = {},
   ): Promise<TaskMatchList> => {
     const data = await serverApi<TaskMatchList>(
@@ -141,6 +143,8 @@ export const loadPublicTaskMatch = cache(
         company: filters.company,
         remote: filters.remote,
         includeUnspecified: filters.includeUnspecified,
+        q: filters.q,
+        workType: filters.workType,
         limit: filters.limit ?? 24,
       })}`,
     );

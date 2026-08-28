@@ -15,7 +15,8 @@ import { ErrorNote } from "@/components/ErrorNote";
 import { ScoreBar } from "@/components/ScoreBar";
 import { Skeleton } from "@/components/Skeleton";
 import { DualScore } from "@/components/taskmatch/DualScore";
-import { formatDate, formatMoney, formatRelativeTime, humanize } from "@/lib/format";
+import { formatDate, formatRelativeTime, humanize } from "@/lib/format";
+import { opportunityPay } from "@/lib/opportunityPay";
 import { track } from "@/lib/track";
 
 const JOURNEY = [
@@ -110,14 +111,7 @@ export default function OpportunityPage({
     );
   }
 
-  const pay =
-    item.minRate != null || item.maxRate != null
-      ? `${formatMoney(item.minRate ?? item.maxRate, item.currency)}${
-          item.maxRate != null && item.minRate != null && item.maxRate !== item.minRate
-            ? `–${formatMoney(item.maxRate, item.currency)}`
-            : ""
-        }/h`
-      : "Not listed";
+  const pay = opportunityPay(item);
   const matches = (item.candidateMatch?.reasons ?? []).filter((r) => r.kind === "match");
   const gaps = (item.candidateMatch?.reasons ?? []).filter((r) => r.kind === "gap");
 
@@ -146,6 +140,17 @@ export default function OpportunityPage({
               )}
             </div>
             <h1 className="page-title mt-1">{item.title}</h1>
+            {item.isNew ? (
+              <span className="badge mt-2 bg-accent-soft text-accent">NEW</span>
+            ) : null}
+            {pay ? (
+              <p className="pay-badge mt-3" aria-label={pay.aria}>
+                <span className="pay-amount num">{pay.amount}</span>
+                <span className="pay-unit">{pay.unit}</span>
+              </p>
+            ) : (
+              <p className="mt-3 text-sm text-muted">Pay not listed</p>
+            )}
             {item.candidateMatch && (
               <p className="mt-1 text-sm text-muted">{item.recommendationLabel}</p>
             )}
@@ -263,17 +268,23 @@ export default function OpportunityPage({
         </p>
         <p>
           Countries:{" "}
-          {item.countryRestrictions.length
-            ? item.countryRestrictions.join(", ")
-            : "Open / not specified"}
+          {item.countryEligibility === "GLOBAL"
+            ? "Worldwide"
+            : item.countryLabel ||
+              (item.countryRestrictions.length
+                ? item.countryRestrictions.join(", ")
+                : "Not specified")}
         </p>
+        <p>Compensation: {pay ? `${pay.amount} ${pay.unit}` : "Not listed"}</p>
+        {item.lastVerifiedAt && (
+          <p>Verified {formatRelativeTime(item.lastVerifiedAt)}</p>
+        )}
         <p>
           Workload:{" "}
           {item.weeklyHoursMin != null || item.weeklyHoursMax != null
             ? `${item.weeklyHoursMin ?? "?"}–${item.weeklyHoursMax ?? "?"} h/week`
             : "Not specified"}
         </p>
-        <p>Compensation: {pay}</p>
         <p>Remote: {humanize(item.remoteType)}</p>
       </section>
 

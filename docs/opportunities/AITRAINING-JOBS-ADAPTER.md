@@ -33,11 +33,9 @@ stored as null, never $0 and never replaced by platform medians.
 `rawDiscoveryApplicationUrl` and stripped from `originalApplicationUrl` with
 explicit parameter rules.
 
-Country codes are not on the row. Location text is parsed conservatively.
-Remote ≠ worldwide. Unspecified eligibility is **unknown**, not confirmed
-country eligibility. `/taskmatch?country=BR` defaults to confirmed worldwide
-or explicitly Brazil listings. Unspecified location is opt-in via
-`includeUnspecified=true`. Remote alone never implies Brazil eligibility.
+See `AITRAINING-JOBS-DATA-CONTRACT.md` for the complete live field inventory
+and `COUNTRY-ELIGIBILITY.md` for Happy Tasking vs source country rules.
+
 
 Descriptions are not republished. A short factual summary is stored instead.
 
