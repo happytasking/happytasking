@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
 import ApiError from "../utils/ApiError.js";
+import { publicEvidenceWhere } from "../lib/taskmatchPublic.js";
 import { recordActivationIfNeeded } from "./analytics.service.js";
 import { maybeAwardFoundingTasker } from "./badge.service.js";
 
@@ -84,12 +85,14 @@ export async function listDiscussions(params: {
   const limit = Math.min(50, Math.max(1, params.limit || 20));
 
   let companyId: string | undefined;
+  let companyIsDemo = false;
   if (params.companySlug) {
     const company = await prisma.company.findUnique({
       where: { slug: params.companySlug },
     });
     if (!company) throw new ApiError(404, "Company not found");
     companyId = company.id;
+    companyIsDemo = company.isDemo;
   }
 
   const topicMap: Record<string, string> = {
@@ -101,6 +104,7 @@ export async function listDiscussions(params: {
 
   const where = {
     status: "published",
+    ...publicEvidenceWhere(companyIsDemo),
     ...(companyId ? { companyId } : {}),
     ...(params.topic && topicMap[params.topic]
       ? { category: topicMap[params.topic] as never }
@@ -153,7 +157,7 @@ export async function getDiscussion(id: string) {
   const discussion = await prisma.discussion.findUnique({
     where: { id },
     include: {
-      company: { select: { name: true, slug: true, logoUrl: true } },
+      company: { select: { name: true, slug: true, logoUrl: true, isDemo: true } },
       domain: true,
       skill: true,
       author: { select: { username: true, displayName: true } },
@@ -174,6 +178,9 @@ export async function getDiscussion(id: string) {
     },
   });
   if (!discussion) throw new ApiError(404, "Discussion not found");
+  if (discussion.isDemo && discussion.company && !discussion.company.isDemo) {
+    throw new ApiError(404, "Discussion not found");
+  }
   return withVoteCount(discussion);
 }
 
