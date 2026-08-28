@@ -286,7 +286,7 @@ function Dashboard() {
 function TaskMatchPage({ initial }: { initial: TaskMatchList }) {
   const { user } = useAuth();
   if (user) return <Dashboard />;
-  return <TaskMatchLanding opportunities={initial.items} />;
+  return <TaskMatchLanding opportunities={initial.items} total={initial.total} />;
 }
 
 export default function Page({ initial }: { initial: TaskMatchList }) {

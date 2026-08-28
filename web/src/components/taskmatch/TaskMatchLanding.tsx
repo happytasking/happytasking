@@ -25,8 +25,10 @@ const SUPPORTING = [
 
 export function TaskMatchLanding({
   opportunities,
+  total,
 }: {
   opportunities: Card[];
+  total?: number;
 }) {
   const { searchParams, setQuery } = useSoftQuery();
   const catalog = opportunities.filter(isLiveCatalogOpportunity);
@@ -57,6 +59,12 @@ export function TaskMatchLanding({
 
       <section className="space-y-4">
         <h2 className="section-title">Current opportunities</h2>
+        {typeof total === "number" && total > 0 && (
+          <p className="text-sm text-muted">
+            {catalog.length} shown of {total} tracked active listings.
+            Open jobs are not TaskPulse.
+          </p>
+        )}
         <div className="flex flex-wrap gap-3">
           <label className="space-y-1" htmlFor="landing-country">
             <span className="label">Country</span>

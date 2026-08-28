@@ -549,6 +549,8 @@ export type OpportunityCard = {
   sourceType: string;
   sourceLabel: string;
   sourceUrl?: string | null;
+  primarySource?: string | null;
+  primarySourceUrl?: string | null;
   discoverySource?: string | null;
   discoveryNote?: string | null;
   lastVerifiedAt: string | null;
@@ -590,6 +592,7 @@ export type OpportunityCard = {
 
 export type TaskMatchList = {
   items: OpportunityCard[];
+  total?: number;
   strength: {
     percent: number;
     items: { key: string; label: string; done: boolean }[];

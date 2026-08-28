@@ -20,6 +20,7 @@ import {
 } from "../lib/taskmatch.js";
 import {
   hasPublicCommunityIntelligence,
+  isPublicOpportunityCatalogItem,
   publicOpportunityCatalogWhere,
 } from "../lib/taskmatchPublic.js";
 import { resolveApplicationDestination } from "../opportunities/referrals.js";
@@ -351,6 +352,7 @@ const opportunityInclude = {
       slug: true,
       logoUrl: true,
       isDemo: true,
+      companyStatus: true,
     },
   },
   skills: { include: { skill: true } },
@@ -443,6 +445,8 @@ function scoreOpportunity(
     sourceType: opp.sourceType,
     sourceLabel: sourceLabel(opp.sourceType, opp.discoverySource),
     sourceUrl: opp.sourceUrl,
+    primarySource: opp.primarySource,
+    primarySourceUrl: opp.primarySourceUrl,
     discoverySource: opp.discoverySource,
     discoveryUrl: opp.discoveryUrl,
     discoveryNote:
@@ -504,36 +508,41 @@ export async function listMatches(
   const profile = userId ? await loadCandidateProfile(userId) : null;
 
   const country = query.country?.trim().toUpperCase();
-  const opportunities = await prisma.opportunity.findMany({
-    where: {
-      ...publicOpportunityCatalogWhere(query.company),
-      relevanceStatus: "ACCEPTED",
-      ...(query.domain
-        ? { domains: { some: { domain: { slug: query.domain } } } }
-        : {}),
-      ...(query.skill
-        ? { skills: { some: { skill: { slug: query.skill } } } }
-        : {}),
-      ...(query.paymentModel ? { paymentModel: query.paymentModel } : {}),
-      ...(query.minRate != null ? { maxRate: { gte: query.minRate } } : {}),
-      ...(query.remote === "true" ? { remoteType: "REMOTE" as const } : {}),
-      ...(country
-        ? {
-            OR: [
-              { countryEligibility: "GLOBAL" as const },
-              { countryEligibility: "UNSPECIFIED" as const },
-              {
-                countryEligibility: "EXPLICIT" as const,
-                countryRestrictions: { has: country },
-              },
-            ],
-          }
-        : {}),
-    },
-    include: opportunityInclude,
-    orderBy: { lastVerifiedAt: "desc" },
-    take: 250,
-  });
+  const catalogWhere = {
+    ...publicOpportunityCatalogWhere(query.company),
+    relevanceStatus: "ACCEPTED" as const,
+    ...(query.domain
+      ? { domains: { some: { domain: { slug: query.domain } } } }
+      : {}),
+    ...(query.skill
+      ? { skills: { some: { skill: { slug: query.skill } } } }
+      : {}),
+    ...(query.paymentModel ? { paymentModel: query.paymentModel } : {}),
+    ...(query.minRate != null ? { maxRate: { gte: query.minRate } } : {}),
+    ...(query.remote === "true" ? { remoteType: "REMOTE" as const } : {}),
+    ...(country
+      ? {
+          OR: [
+            { countryEligibility: "GLOBAL" as const },
+            { countryEligibility: "UNSPECIFIED" as const },
+            {
+              countryEligibility: "EXPLICIT" as const,
+              countryRestrictions: { has: country },
+            },
+          ],
+        }
+      : {}),
+  };
+
+  const [opportunities, total] = await Promise.all([
+    prisma.opportunity.findMany({
+      where: catalogWhere,
+      include: opportunityInclude,
+      orderBy: { lastVerifiedAt: "desc" },
+      take: 250,
+    }),
+    prisma.opportunity.count({ where: catalogWhere }),
+  ]);
 
   const saved = userId
     ? await prisma.savedOpportunity.findMany({
@@ -589,6 +598,7 @@ export async function listMatches(
 
   return {
     items: rows.slice(0, query.limit ?? 20),
+    total,
     strength: profile?.strength ?? null,
     personalized: Boolean(profile),
     hasCommunityIntelligence: rows.some((row) =>
@@ -614,7 +624,9 @@ export async function getOpportunityMatch(slug: string, userId?: string) {
       },
     },
   });
-  if (!opp) throw new ApiError(404, "Opportunity not found");
+  if (!opp || !isPublicOpportunityCatalogItem(opp)) {
+    throw new ApiError(404, "Opportunity not found");
+  }
 
   const weights = await getWeights();
   const profile = userId ? await loadCandidateProfile(userId) : null;

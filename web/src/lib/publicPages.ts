@@ -158,7 +158,9 @@ export const loadIssue = cache(async (publicId: string) => {
 });
 
 export const loadOpportunity = cache(async (slug: string) => {
-  return serverApi<OpportunityDetail>(`/taskmatch/opportunities/${slug}`);
+  return serverApi<OpportunityDetail>(`/taskmatch/opportunities/${slug}`, {
+    revalidate: false,
+  });
 });
 
 async function loadCompareSide(slug?: string): Promise<CompareSide | null> {
