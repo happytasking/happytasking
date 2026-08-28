@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import {
   hasPublicCommunityIntelligence,
   isPublicOpportunityCatalogItem,
+  publicEvidenceWhere,
   publicOpportunityCatalogWhere,
   taskPulseReportScope,
 } from "./taskmatchPublic.js";
@@ -54,8 +55,35 @@ function testCatalogGate() {
 function testPublicPulseIgnoresDemo() {
   const publicScope = taskPulseReportScope("co1", { realOnly: true });
   assert.equal(publicScope.isDemo, false);
+  const defaultPublic = taskPulseReportScope("co1");
+  assert.equal(defaultPublic.isDemo, false);
   const internal = taskPulseReportScope("co1", { realOnly: false });
   assert.equal("isDemo" in internal, false);
+}
+
+function testRealCompanyDemoReviewsNeverCountAsPublicEvidence() {
+  assert.deepEqual(publicEvidenceWhere(false), { isDemo: false });
+}
+
+function testRealCompanyDemoPayReportsNeverCountAsPublicEvidence() {
+  assert.deepEqual(publicEvidenceWhere(false), { isDemo: false });
+}
+
+function testRealCompanyDemoTaskPulseNeverCountsAsPublicEvidence() {
+  const scope = taskPulseReportScope("converted-real-company");
+  assert.equal(scope.isDemo, false);
+  assert.equal(taskPulseReportScope("converted-real-company", { realOnly: true }).isDemo, false);
+}
+
+function testDemoCompanyPagesMayStillShowOwnDemoEvidence() {
+  assert.deepEqual(publicEvidenceWhere(true), {});
+  assert.equal("isDemo" in taskPulseReportScope("demo-co", { realOnly: false }), false);
+}
+
+function testRealCompanyNeverIngestsDemoEvidence() {
+  assert.deepEqual(publicEvidenceWhere(false), { isDemo: false });
+  assert.deepEqual(publicEvidenceWhere(undefined), { isDemo: false });
+  assert.deepEqual(publicEvidenceWhere(true), {});
 }
 
 function testMissingIntelligenceIsNotZero() {
@@ -82,5 +110,10 @@ function testMissingIntelligenceIsNotZero() {
 testCatalogWhere();
 testCatalogGate();
 testPublicPulseIgnoresDemo();
+testRealCompanyNeverIngestsDemoEvidence();
+testRealCompanyDemoReviewsNeverCountAsPublicEvidence();
+testRealCompanyDemoPayReportsNeverCountAsPublicEvidence();
+testRealCompanyDemoTaskPulseNeverCountsAsPublicEvidence();
+testDemoCompanyPagesMayStillShowOwnDemoEvidence();
 testMissingIntelligenceIsNotZero();
 console.log("taskmatchPublic.test.ts ok");

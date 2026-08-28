@@ -19,6 +19,7 @@ export default async function Page({
     domain: firstQuery(sp.domain),
     company: firstQuery(sp.company),
     remote: firstQuery(sp.remote),
+    includeUnspecified: firstQuery(sp.includeUnspecified),
     sort: firstQuery(sp.sort) || "newest",
   });
   return (

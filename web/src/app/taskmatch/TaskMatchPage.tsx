@@ -31,6 +31,7 @@ function Dashboard() {
       company: searchParams.get("company") || "",
       country: searchParams.get("country") || "",
       remote: searchParams.get("remote") || "",
+      includeUnspecified: searchParams.get("includeUnspecified") || "",
       pulse: searchParams.get("pulse") || "",
       sort: searchParams.get("sort") || "recommended",
       includeWorkedWith: searchParams.get("includeWorkedWith") || "true",
@@ -50,6 +51,7 @@ function Dashboard() {
           company: filters.company || undefined,
           country: filters.country || undefined,
           remote: filters.remote || undefined,
+          includeUnspecified: filters.includeUnspecified || undefined,
           pulse: filters.pulse || undefined,
           sort: filters.sort,
           includeWorkedWith: filters.includeWorkedWith,
@@ -192,11 +194,26 @@ function Dashboard() {
             value={filters.country}
             onChange={(e) => setQuery({ country: e.target.value || null })}
           >
-            <option value="">All / unspecified</option>
+            <option value="">All countries</option>
             <option value="BR">Brazil</option>
             <option value="US">United States</option>
           </select>
         </label>
+        {filters.country ? (
+          <label className="flex items-end gap-2 pb-2 text-sm" htmlFor="taskmatch-unspecified">
+            <input
+              id="taskmatch-unspecified"
+              type="checkbox"
+              checked={filters.includeUnspecified === "true"}
+              onChange={(e) =>
+                setQuery({
+                  includeUnspecified: e.target.checked ? "true" : null,
+                })
+              }
+            />
+            Include opportunities with unspecified location
+          </label>
+        ) : null}
         <label className="flex items-end gap-2 pb-2 text-sm" htmlFor="taskmatch-remote">
           <input
             id="taskmatch-remote"

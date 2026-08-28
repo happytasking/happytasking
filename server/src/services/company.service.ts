@@ -10,7 +10,7 @@ import {
 } from "./taskScore.service.js";
 import { getCompanySparklines } from "./trends.service.js";
 import { companySEOEligibility } from "./companySeo.eligibility.js";
-import { taskPulseReportScope } from "../lib/taskmatchPublic.js";
+import { publicEvidenceWhere, taskPulseReportScope } from "../lib/taskmatchPublic.js";
 import type { ComplaintStatus } from "@prisma/client";
 
 const PUBLIC_ISSUE_STATUSES: ComplaintStatus[] = [
@@ -313,7 +313,7 @@ export async function getCompanyTaskScore(
       companyId,
       ...(since ? { createdAt: { gte: since } } : {}),
       ...(domain ? { domainId: domain.id } : {}),
-      ...(opts.realOnly ? { isDemo: false } : {}),
+      ...(opts.realOnly !== false ? { isDemo: false } : {}),
     },
     select: TASK_SCORE_REVIEW_SELECT,
   });
@@ -400,7 +400,7 @@ async function getPayByDomain(
   opts: { realOnly?: boolean } = {},
 ) {
   const reports = await prisma.payReport.findMany({
-    where: { companyId, ...(opts.realOnly ? { isDemo: false } : {}) },
+    where: { companyId, ...publicEvidenceWhere(opts.realOnly === false) },
     include: { domain: true },
     orderBy: { createdAt: "desc" },
   });
@@ -467,17 +467,17 @@ async function getCompanySeoEvidence(companyId: string) {
 async function getCompanyWorkDomains(companyId: string): Promise<string[]> {
   const [fromPay, fromReviews, fromOpps] = await Promise.all([
     prisma.payReport.findMany({
-      where: { companyId, domainId: { not: null } },
+      where: { companyId, isDemo: false, domainId: { not: null } },
       select: { domain: { select: { name: true } } },
       distinct: ["domainId"],
     }),
     prisma.review.findMany({
-      where: { companyId, domainId: { not: null } },
+      where: { companyId, isDemo: false, domainId: { not: null } },
       select: { domain: { select: { name: true } } },
       distinct: ["domainId"],
     }),
     prisma.opportunityDomain.findMany({
-      where: { opportunity: { companyId, status: "ACTIVE" } },
+      where: { opportunity: { companyId, status: "ACTIVE", isDemo: false } },
       select: { domain: { select: { name: true } } },
     }),
   ]);
@@ -504,18 +504,25 @@ async function getSimilarCompanies(
       OR: [
         {
           payReports: {
-            some: { domain: { name: { in: domains } } },
+            some: {
+              ...(isDemo ? {} : { isDemo: false }),
+              domain: { name: { in: domains } },
+            },
           },
         },
         {
           reviews: {
-            some: { domain: { name: { in: domains } } },
+            some: {
+              ...(isDemo ? {} : { isDemo: false }),
+              domain: { name: { in: domains } },
+            },
           },
         },
         {
           opportunities: {
             some: {
               status: "ACTIVE",
+              isDemo: false,
               domains: { some: { domain: { name: { in: domains } } } },
             },
           },

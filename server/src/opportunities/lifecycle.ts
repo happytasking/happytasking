@@ -3,6 +3,17 @@ import { prisma } from "../lib/prisma.js";
 import { env } from "../config/env.js";
 import { publicOpportunityCatalogWhere } from "../lib/taskmatchPublic.js";
 
+export function shouldReconcileLifecycle(input: {
+  truncated?: boolean;
+  recordCount: number;
+  fetched: number;
+}) {
+  if (input.truncated) return false;
+  if (input.fetched <= 0) return false;
+  if (input.recordCount <= 0) return false;
+  return true;
+}
+
 export function lifecycleStatus(input: {
   seenThisRun: boolean;
   lastSeenAt: Date | null;

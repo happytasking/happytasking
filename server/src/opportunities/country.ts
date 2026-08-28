@@ -67,12 +67,15 @@ export function parseCountryLocation(
 export function matchesCountryFilter(
   country: CountryParse,
   requested: string | undefined,
+  opts: { includeUnspecified?: boolean } = {},
 ): boolean {
   if (!requested) return true;
   const code = requested.trim().toUpperCase();
   if (!code) return true;
   if (country.eligibility === "GLOBAL") return true;
-  if (country.eligibility === "UNSPECIFIED") return true;
+  if (country.eligibility === "UNSPECIFIED") {
+    return opts.includeUnspecified === true;
+  }
   return country.codes.includes(code);
 }
 

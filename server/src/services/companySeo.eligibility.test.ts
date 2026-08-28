@@ -163,7 +163,47 @@ function testLegacyContentHelper() {
   );
 }
 
+function testConvertedCompanyDoesNotUseDemoReviews() {
+  const result = companySEOEligibility({
+    name: "Mercor",
+    slug: "mercor",
+    status: "ACTIVE",
+    isDemo: false,
+    description:
+      "Expert network matching specialists to AI and research task work.",
+    website: "https://mercor.com",
+    reviews: 0,
+    payReports: 0,
+    availabilityReports: 0,
+    opportunities: 363,
+    complaints: 0,
+  });
+  assert.equal(result.indexable, true);
+  assert.deepEqual(result.reasons, []);
+}
+
+function testDemoFlagStillBlocksEvenWithRealOpportunities() {
+  const result = companySEOEligibility({
+    name: "Mercor",
+    slug: "mercor",
+    status: "ACTIVE",
+    isDemo: true,
+    description:
+      "Expert network matching specialists to AI and research task work.",
+    website: "https://mercor.com",
+    reviews: 0,
+    payReports: 0,
+    availabilityReports: 0,
+    opportunities: 363,
+    complaints: 0,
+  });
+  assert.equal(result.indexable, false);
+  assert.ok(result.reasons.includes("DEMO_ONLY"));
+}
+
 testDemoNeverIndexable();
+testConvertedCompanyDoesNotUseDemoReviews();
+testDemoFlagStillBlocksEvenWithRealOpportunities();
 testInactiveIsPrivate();
 testInvalidCompany();
 testEmptyShellInsufficientContent();

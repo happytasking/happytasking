@@ -1,8 +1,8 @@
 import { prisma } from "../lib/prisma.js";
 import { env } from "../config/env.js";
-import { createAITrainingJobsAdapter } from "./adapters/aitrainingJobs.js";
+import { createAITrainingJobsAdapter, SourceDegradedError } from "./adapters/aitrainingJobs.js";
 import { withOpportunitySyncLock } from "./lock.js";
-import { reconcileLifecycle } from "./lifecycle.js";
+import { reconcileLifecycle, shouldReconcileLifecycle } from "./lifecycle.js";
 import { ensureSourceRegistry } from "./registry.js";
 import {
   AITRAINING_JOBS_SOURCE_KEY,
@@ -53,10 +53,16 @@ async function runPipeline(opts: SyncOptions): Promise<SyncOutcome> {
         "AITraining.jobs adapter timeout",
       );
       const upserted = await upsertNormalizedOpportunities(fetched.records);
-      const lifecycle = await reconcileLifecycle({
-        sourceKey: AITRAINING_JOBS_SOURCE_KEY,
-        seenExternalIds: seenExternalIds(fetched.records),
-      });
+      const lifecycle = shouldReconcileLifecycle({
+        truncated: fetched.truncated,
+        recordCount: fetched.records.length,
+        fetched: fetched.fetched,
+      })
+        ? await reconcileLifecycle({
+            sourceKey: AITRAINING_JOBS_SOURCE_KEY,
+            seenExternalIds: seenExternalIds(fetched.records),
+          })
+        : { stale: 0, closed: 0 };
       const metrics: SourceMetrics = {
         ...EMPTY_SOURCE_METRICS,
         ...upserted,
@@ -87,6 +93,7 @@ async function runPipeline(opts: SyncOptions): Promise<SyncOutcome> {
     } catch (error) {
       sourceFailures += 1;
       const message = error instanceof Error ? error.message : String(error);
+      const degraded = error instanceof SourceDegradedError;
       sources[AITRAINING_JOBS_SOURCE_KEY] = {
         ...EMPTY_SOURCE_METRICS,
         errors: 1,
@@ -97,7 +104,7 @@ async function runPipeline(opts: SyncOptions): Promise<SyncOutcome> {
         data: {
           runId: run.id,
           sourceKey: AITRAINING_JOBS_SOURCE_KEY,
-          status: "FAILED",
+          status: degraded ? "DEGRADED" : "FAILED",
           errors: 1,
           durationMs: Date.now() - sourceStarted,
           error: message,
@@ -108,7 +115,7 @@ async function runPipeline(opts: SyncOptions): Promise<SyncOutcome> {
         data: {
           lastError: message.slice(0, 500),
           failureCount: { increment: 1 },
-          health: "ERROR",
+          health: degraded ? "DEGRADED" : "ERROR",
         },
       });
     }

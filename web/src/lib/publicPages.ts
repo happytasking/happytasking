@@ -127,6 +127,7 @@ export const loadPublicTaskMatch = cache(
       domain?: string;
       company?: string;
       remote?: string;
+      includeUnspecified?: string;
       sort?: string;
       limit?: number;
     } = {},
@@ -139,6 +140,7 @@ export const loadPublicTaskMatch = cache(
         domain: filters.domain,
         company: filters.company,
         remote: filters.remote,
+        includeUnspecified: filters.includeUnspecified,
         limit: filters.limit ?? 24,
       })}`,
     );

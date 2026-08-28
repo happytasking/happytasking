@@ -35,6 +35,7 @@ export function TaskMatchLanding({
   const country = searchParams.get("country") || "";
   const sort = searchParams.get("sort") || "newest";
   const remote = searchParams.get("remote") === "true";
+  const includeUnspecified = searchParams.get("includeUnspecified") === "true";
 
   useEffect(() => {
     track("taskmatch_landing_viewed");
@@ -74,7 +75,7 @@ export function TaskMatchLanding({
               value={country}
               onChange={(e) => setQuery({ country: e.target.value || null })}
             >
-              <option value="">All / unspecified</option>
+              <option value="">All countries</option>
               <option value="BR">Brazil</option>
               <option value="US">United States</option>
             </select>
@@ -104,10 +105,26 @@ export function TaskMatchLanding({
             Remote
           </label>
         </div>
+        {country ? (
+          <label className="flex items-center gap-2 text-sm" htmlFor="landing-unspecified">
+            <input
+              id="landing-unspecified"
+              type="checkbox"
+              checked={includeUnspecified}
+              onChange={(e) =>
+                setQuery({
+                  includeUnspecified: e.target.checked ? "true" : null,
+                })
+              }
+            />
+            Include opportunities with unspecified location
+          </label>
+        ) : null}
         <p className="text-xs text-muted">
-          Remote does not automatically mean a country is eligible. Brazil
-          results include explicitly eligible, worldwide, and unspecified
-          listings.
+          Remote does not automatically mean a country is eligible. Default
+          country results are confirmed worldwide or explicitly listed
+          countries. Unspecified location is opt-in and is never labeled
+          eligible.
         </p>
         {catalog.length > 0 ? (
           <>

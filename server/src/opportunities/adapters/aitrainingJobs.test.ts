@@ -3,6 +3,8 @@ import {
   discoverFetchRolesActionId,
   normalizeAiTrainingRow,
   parseNextActionPayload,
+  StaleFetchRolesActionError,
+  SourceDegradedError,
 } from "./aitrainingJobs.js";
 
 const FIXTURE = `0:{"a":"$@1","f":"","b":"abc"}
@@ -46,7 +48,33 @@ function testDiscoversActionId() {
   );
 }
 
+function testActionIdChangeIsDiscoveredFromPublicJs() {
+  const previous = "4029040649fbd3207c680ae9257a83274a7b265852";
+  const next = "111111111111111111111111111111111111111111";
+  const js = `createServerReference)("${next}",z.callServer,void 0,z.findSourceMapURL,"fetchRoles")`;
+  assert.equal(discoverFetchRolesActionId(js), next);
+  assert.notEqual(discoverFetchRolesActionId(js), previous);
+}
+
+function testStalePayloadThrowsTypedError() {
+  assert.throws(
+    () => parseNextActionPayload("<html>no flight</html>"),
+    (error: unknown) => error instanceof StaleFetchRolesActionError,
+  );
+}
+
+function testSourceDegradedErrorIsActionable() {
+  const error = new SourceDegradedError(
+    "AITraining.jobs fetchRoles action could not be rediscovered from public pages",
+  );
+  assert.equal(error.name, "SourceDegradedError");
+  assert.match(error.message, /rediscovered/);
+}
+
 testParsesFlightAndIgnoresPlatformPay();
 testPostedAtIsNotFirstSeen();
 testDiscoversActionId();
+testActionIdChangeIsDiscoveredFromPublicJs();
+testStalePayloadThrowsTypedError();
+testSourceDegradedErrorIsActionable();
 console.log("aitrainingJobs.test.ts ok");

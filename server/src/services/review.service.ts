@@ -3,6 +3,7 @@ import { prisma } from "../lib/prisma.js";
 import ApiError from "../utils/ApiError.js";
 import { recordActivationIfNeeded, trackEvent } from "./analytics.service.js";
 import { maybeAwardFoundingTasker } from "./badge.service.js";
+import { publicEvidenceWhere } from "../lib/taskmatchPublic.js";
 
 const score = z.number().int().min(1).max(5);
 
@@ -118,6 +119,7 @@ export async function listCompanyReviews(
   const limit = Math.min(50, Math.max(1, params.limit || 20));
   const where = {
     companyId: company.id,
+    ...publicEvidenceWhere(company.isDemo),
     ...(params.domainId ? { domainId: params.domainId } : {}),
   };
 
@@ -145,6 +147,7 @@ export async function listCompanyReviews(
 export async function listLatestReviews(limit = 8) {
   const reviews = await prisma.review.findMany({
     take: limit,
+    where: publicEvidenceWhere(),
     orderBy: { createdAt: "desc" },
     include: {
       company: { select: { name: true, slug: true, logoUrl: true } },

@@ -12,6 +12,7 @@ import {
 import { recordActivationIfNeeded, trackEvent } from "./analytics.service.js";
 import { maybeAwardFoundingTasker } from "./badge.service.js";
 import { hiringActivityByCompany } from "../opportunities/lifecycle.js";
+import { publicEvidenceWhere } from "../lib/taskmatchPublic.js";
 
 export const payReportSchema = z.object({
   companySlug: z.string(),
@@ -141,6 +142,7 @@ export async function createAvailabilityReport(
 export async function getMarketDashboard() {
   const domains = await prisma.domain.findMany({ orderBy: { name: "asc" } });
   const payReports = await prisma.payReport.findMany({
+    where: publicEvidenceWhere(),
     include: { domain: true },
   });
 
@@ -179,7 +181,7 @@ export async function getMarketDashboard() {
 
   const since7 = periodStartDate("7d")!;
   const recentReviews = await prisma.review.findMany({
-    where: { createdAt: { gte: since7 } },
+    where: { createdAt: { gte: since7 }, ...publicEvidenceWhere() },
   });
   const sentiment =
     recentReviews.length === 0
@@ -207,7 +209,7 @@ export async function getMarketDashboard() {
   });
 
   const allAvailability = await prisma.taskAvailabilityReport.findMany({
-    where: { reportDate: { gte: since7 } },
+    where: { reportDate: { gte: since7 }, ...publicEvidenceWhere() },
   });
   const availScore =
     allAvailability.length === 0
@@ -268,6 +270,7 @@ async function computeCompanyPeriodScore(companyId: string, period: string) {
     where: {
       companyId,
       ...(since ? { createdAt: { gte: since } } : {}),
+      ...publicEvidenceWhere(),
     },
     select: TASK_SCORE_REVIEW_SELECT,
   });
@@ -292,6 +295,7 @@ export async function getLiveMarket(limit = 12) {
             companyId: company.id,
             createdAt: { gte: since7 },
             effectiveRate: { not: null },
+            ...publicEvidenceWhere(company.isDemo),
           },
           select: { effectiveRate: true },
         }),

@@ -1,5 +1,6 @@
 import { prisma } from "../lib/prisma.js";
 import ApiError from "../utils/ApiError.js";
+import { publicEvidenceWhere } from "../lib/taskmatchPublic.js";
 import {
   computeTaskScore,
   TASK_SCORE_REVIEW_SELECT,
@@ -106,16 +107,20 @@ export async function getCompanyTrends(slug: string, now = new Date()) {
 
   const [reviews, availability, payReports] = await Promise.all([
     prisma.review.findMany({
-      where: { companyId: company.id, createdAt: { gte: since } },
+      where: { companyId: company.id, createdAt: { gte: since }, ...publicEvidenceWhere(company.isDemo) },
       orderBy: { createdAt: "asc" },
       select: TASK_SCORE_REVIEW_SELECT,
     }),
     prisma.taskAvailabilityReport.findMany({
-      where: { companyId: company.id, reportDate: { gte: addDays(startOfDay(now), -30) } },
+      where: {
+        companyId: company.id,
+        reportDate: { gte: addDays(startOfDay(now), -30) },
+        ...publicEvidenceWhere(company.isDemo),
+      },
       orderBy: { reportDate: "asc" },
     }),
     prisma.payReport.findMany({
-      where: { companyId: company.id, createdAt: { gte: since } },
+      where: { companyId: company.id, createdAt: { gte: since }, ...publicEvidenceWhere(company.isDemo) },
       orderBy: { createdAt: "asc" },
     }),
   ]);
@@ -267,7 +272,7 @@ export async function getCompanySparklines(
 
   const since = addDays(startOfDay(now), -(points * stepDays + windowDays));
   const reviews = await prisma.review.findMany({
-    where: { companyId: { in: companyIds }, createdAt: { gte: since } },
+    where: { companyId: { in: companyIds }, createdAt: { gte: since }, ...publicEvidenceWhere() },
     select: { companyId: true, createdAt: true, overallExperience: true },
   });
 
@@ -303,17 +308,17 @@ export async function getMarketTrends(now = new Date()) {
 
   const [reviews, availability, domains, payReports] = await Promise.all([
     prisma.review.findMany({
-      where: { createdAt: { gte: since } },
+      where: { createdAt: { gte: since }, ...publicEvidenceWhere() },
       orderBy: { createdAt: "asc" },
       select: TASK_SCORE_REVIEW_SELECT,
     }),
     prisma.taskAvailabilityReport.findMany({
-      where: { reportDate: { gte: addDays(startOfDay(now), -30) } },
+      where: { reportDate: { gte: addDays(startOfDay(now), -30) }, ...publicEvidenceWhere() },
       orderBy: { reportDate: "asc" },
     }),
     prisma.domain.findMany({ orderBy: { name: "asc" } }),
     prisma.payReport.findMany({
-      where: { createdAt: { gte: since } },
+      where: { createdAt: { gte: since }, ...publicEvidenceWhere() },
       include: { domain: true },
     }),
   ]);

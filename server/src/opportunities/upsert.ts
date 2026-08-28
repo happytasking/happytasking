@@ -1,17 +1,31 @@
-import slugify from "slugify";
+import { Prisma } from "@prisma/client";
 import { prisma } from "../lib/prisma.js";
 import { resolveCompany, resolveDomainId } from "./companyResolve.js";
 import { canonicalApplicationKey } from "./fingerprint.js";
 import { provenanceLabels } from "./provenance.js";
+import { uniqueOpportunitySlug } from "./slug.js";
 import type { NormalizedOpportunity, SourceMetrics } from "./types.js";
 import { EMPTY_SOURCE_METRICS } from "./types.js";
 
-function uniqueSlug(companySlug: string, title: string, externalId: string) {
-  const base = slugify(`${companySlug}-${title}`, { lower: true, strict: true }).slice(
-    0,
-    140,
-  );
-  return `${base}-${externalId.replace(/[^a-z0-9]/gi, "").slice(0, 10)}`.slice(0, 180);
+function uniqueTargets(error: Prisma.PrismaClientKnownRequestError): string[] {
+  const target = error.meta?.target;
+  if (Array.isArray(target)) return target.map(String);
+  if (typeof target === "string") return [target];
+  return [];
+}
+
+async function allocateSlug(companySlug: string, title: string, externalId: string) {
+  const base = uniqueOpportunitySlug(companySlug, title, externalId);
+  let candidate = base;
+  for (let n = 2; n < 50; n += 1) {
+    const taken = await prisma.opportunity.findUnique({
+      where: { slug: candidate },
+      select: { id: true },
+    });
+    if (!taken) return candidate;
+    candidate = `${base}-${n}`.slice(0, 180);
+  }
+  throw new Error(`Could not allocate a unique slug for ${companySlug} ${title}`);
 }
 
 async function findDuplicate(record: NormalizedOpportunity, companyId: string) {
@@ -20,15 +34,26 @@ async function findDuplicate(record: NormalizedOpportunity, companyId: string) {
   });
   if (byExternal) return { row: byExternal, reason: "external-id" as const };
 
+  if (record.originalApplicationUrl) {
+    const byExactUrl = await prisma.opportunity.findFirst({
+      where: {
+        isDemo: false,
+        originalApplicationUrl: record.originalApplicationUrl,
+      },
+    });
+    if (byExactUrl) return { row: byExactUrl, reason: "application-url" as const };
+  }
+
   const canonical = canonicalApplicationKey(record.originalApplicationUrl);
   if (canonical) {
+    const hostPath = canonical.split("://")[1] || canonical;
     const byUrl = await prisma.opportunity.findFirst({
       where: {
         isDemo: false,
         OR: [
-          { originalApplicationUrl: { contains: canonical.split("://")[1] || canonical } },
-          { primarySourceUrl: { contains: canonical.split("://")[1] || canonical } },
-          { applicationUrl: { contains: canonical.split("://")[1] || canonical } },
+          { originalApplicationUrl: { contains: hostPath } },
+          { primarySourceUrl: { contains: hostPath } },
+          { applicationUrl: { contains: hostPath } },
         ],
       },
     });
@@ -60,6 +85,10 @@ export async function upsertNormalizedOpportunities(
       continue;
     }
     metrics.valid += 1;
+    if (seen.has(record.externalId)) {
+      metrics.duplicates += 1;
+      continue;
+    }
 
     const company = await resolveCompany({
       slugHint: record.companySlugHint,
@@ -140,15 +169,65 @@ export async function upsertNormalizedOpportunities(
       continue;
     }
 
-    const slug = uniqueSlug(company.slug, record.title, record.externalId);
-    await prisma.opportunity.create({
-      data: {
-        ...payload,
-        slug,
-        firstSeenAt: now,
-        domains: domainId ? { create: [{ domainId }] } : undefined,
-      },
-    });
+    const slug = await allocateSlug(company.slug, record.title, record.externalId);
+    try {
+      await prisma.opportunity.create({
+        data: {
+          ...payload,
+          slug,
+          firstSeenAt: now,
+          domains: domainId ? { create: [{ domainId }] } : undefined,
+        },
+      });
+    } catch (error) {
+      const conflict =
+        error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002";
+      if (!conflict) throw error;
+      const targets = uniqueTargets(error);
+      if (targets.some((t) => t.includes("externalId") || t.includes("sourceKey"))) {
+        const existing = await prisma.opportunity.findFirst({
+          where: { sourceKey: record.sourceKey, externalId: record.externalId },
+        });
+        if (existing) {
+          metrics.duplicates += 1;
+          const changed =
+            existing.title !== record.title ||
+            existing.minRate !== record.pay.minRate ||
+            existing.maxRate !== record.pay.maxRate ||
+            existing.status !== "ACTIVE";
+          await prisma.opportunity.update({
+            where: { id: existing.id },
+            data: {
+              ...payload,
+              firstSeenAt: existing.firstSeenAt ?? now,
+              publishedAt: existing.publishedAt ?? publishedAt,
+              sourceType:
+                labels.sourceType === "PUBLIC_LISTING" ||
+                existing.sourceType === "PUBLIC_LISTING"
+                  ? "PUBLIC_LISTING"
+                  : payload.sourceType,
+            },
+          });
+          if (changed) metrics.updated += 1;
+          else metrics.unchanged += 1;
+          seen.add(record.externalId);
+          continue;
+        }
+      }
+      const retrySlug = await allocateSlug(
+        company.slug,
+        `${record.title}-listing`,
+        `${record.externalId}-retry`,
+      );
+      await prisma.opportunity.create({
+        data: {
+          ...payload,
+          slug: retrySlug,
+          firstSeenAt: now,
+          domains: domainId ? { create: [{ domainId }] } : undefined,
+        },
+      });
+    }
     metrics.created += 1;
     seen.add(record.externalId);
   }

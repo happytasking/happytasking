@@ -101,6 +101,7 @@ export const matchQuerySchema = z.object({
   paymentModel: z.enum(["HOURLY", "PER_TASK", "MILESTONE", "MIXED"]).optional(),
   workload: workloadEnum.optional(),
   includeWorkedWith: z.enum(["true", "false"]).optional(),
+  includeUnspecified: z.enum(["true", "false"]).optional(),
   sort: z
     .enum([
       "recommended",
@@ -524,11 +525,13 @@ export async function listMatches(
       ? {
           OR: [
             { countryEligibility: "GLOBAL" as const },
-            { countryEligibility: "UNSPECIFIED" as const },
             {
               countryEligibility: "EXPLICIT" as const,
               countryRestrictions: { has: country },
             },
+            ...(query.includeUnspecified === "true"
+              ? [{ countryEligibility: "UNSPECIFIED" as const }]
+              : []),
           ],
         }
       : {}),
@@ -618,7 +621,7 @@ export async function getOpportunityMatch(slug: string, userId?: string) {
     include: {
       ...opportunityInclude,
       tips: {
-        where: { status: "PUBLISHED" },
+        where: { status: "PUBLISHED", isDemo: false },
         orderBy: { createdAt: "desc" },
         take: 8,
       },
@@ -652,7 +655,7 @@ export async function getOpportunityMatch(slug: string, userId?: string) {
       where: { companyId: opp.companyId },
     }),
     prisma.screeningReport.aggregate({
-      where: { companyId: opp.companyId },
+      where: { companyId: opp.companyId, isDemo: false },
       _avg: { difficulty: true },
       _count: { id: true },
     }),

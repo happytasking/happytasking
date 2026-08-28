@@ -1,5 +1,20 @@
 import assert from "node:assert/strict";
-import { lifecycleStatus } from "./lifecycle.js";
+import { lifecycleStatus, shouldReconcileLifecycle } from "./lifecycle.js";
+
+function testFailedFetchDoesNotCloseCatalog() {
+  assert.equal(
+    shouldReconcileLifecycle({ truncated: false, recordCount: 0, fetched: 0 }),
+    false,
+  );
+  assert.equal(
+    shouldReconcileLifecycle({ truncated: true, recordCount: 50, fetched: 1666 }),
+    false,
+  );
+  assert.equal(
+    shouldReconcileLifecycle({ truncated: false, recordCount: 1600, fetched: 1666 }),
+    true,
+  );
+}
 
 function hoursAgo(hours: number) {
   return new Date(Date.now() - hours * 3600_000);
@@ -30,6 +45,7 @@ function testBecomesStaleThenClosed() {
   );
 }
 
+testFailedFetchDoesNotCloseCatalog();
 testSeenStaysActive();
 testMissingOneSyncStaysActive();
 testBecomesStaleThenClosed();

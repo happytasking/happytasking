@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { opportunityFingerprint } from "./fingerprint.js";
+import { uniqueOpportunitySlug } from "./slug.js";
 
 function pickKey(input: {
   sourceKey: string;
@@ -71,5 +72,41 @@ function testPrefersExternalIdThenUrlThenFingerprint() {
   );
 }
 
+function testHourlyRerunIsIdempotent() {
+  const fp = opportunityFingerprint({
+    companySlug: "mercor",
+    title: "Software Engineer — AI Training",
+  });
+  const existing = [
+    {
+      sourceKey: "aitraining-jobs",
+      externalId: "abc",
+      canonicalUrl: "https://work.mercor.com/jobs/1",
+      fingerprint: fp,
+    },
+  ];
+  assert.equal(
+    pickKey({
+      sourceKey: "aitraining-jobs",
+      externalId: "abc",
+      canonicalUrl: "https://work.mercor.com/jobs/1",
+      fingerprint: fp,
+      existing,
+    }),
+    "external-id",
+  );
+}
+
+function testSlugDoesNotCollideOnTruncatedExternalId() {
+  const title = "Software Engineer — AI Training";
+  const a = uniqueOpportunitySlug("mercor", title, "0c3d8afd-9ee6-4008-aaaa-aaaaaaaaaaaa");
+  const b = uniqueOpportunitySlug("mercor", title, "0c3d8afd-9ee7-4008-bbbb-bbbbbbbbbbbb");
+  assert.notEqual(a, b);
+  assert.ok(a.startsWith("mercor-software-engineer-ai-training-"));
+  assert.equal(a === "mercor-software-engineer-ai-training-0c3d8afd9e", false);
+}
+
 testPrefersExternalIdThenUrlThenFingerprint();
+testHourlyRerunIsIdempotent();
+testSlugDoesNotCollideOnTruncatedExternalId();
 console.log("dedupe.test.ts ok");

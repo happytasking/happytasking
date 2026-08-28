@@ -16,6 +16,13 @@ import {
 import { siteGraphJsonLd } from "./seo";
 import { STATIC_PUBLIC_ROUTES } from "./indexability";
 
+function testQueryVariantsStayOnTaskMatchCanonical() {
+  assert.equal(taskmatchCanonical(), "https://happytasking.com/taskmatch");
+  assert.equal(TASKMATCH_PATH, "/taskmatch");
+  assert.ok(!STATIC_PUBLIC_ROUTES.some((route) => route.path.includes("country=BR")));
+  assert.ok(!STATIC_PUBLIC_ROUTES.some((route) => route.path === "/taskmatch/brazil"));
+}
+
 function testMetadata() {
   const meta = taskmatchPageMetadata();
   assert.equal(meta.title, TASKMATCH_TITLE);
@@ -121,6 +128,7 @@ testCopyIsNotJobSpam();
 testCatalogTrustGate();
 testNoJobPostingOrRatings();
 testSitemapPolicy();
+testQueryVariantsStayOnTaskMatchCanonical();
 testEmptyIsNotError();
 testAnonymousHasOneH1();
 console.log("taskmatchLanding.test.ts ok");

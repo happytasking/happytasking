@@ -14,6 +14,16 @@ export type CatalogOpportunity = {
   company: CatalogCompany;
 };
 
+/**
+ * Record-level demo filter for public evidence.
+ * A real company identity must never pull demo reviews/pay/TaskPulse
+ * into public metrics just because Company.isDemo became false.
+ */
+export function publicEvidenceWhere(companyIsDemo?: boolean) {
+  if (companyIsDemo === true) return {};
+  return { isDemo: false as const };
+}
+
 export function taskPulseReportScope(
   companyId: string,
   opts: { domainId?: string; realOnly?: boolean } = {},
@@ -21,7 +31,7 @@ export function taskPulseReportScope(
   return {
     companyId,
     ...(opts.domainId ? { domainId: opts.domainId } : {}),
-    ...(opts.realOnly ? { isDemo: false as const } : {}),
+    ...(opts.realOnly !== false ? { isDemo: false as const } : {}),
   };
 }
 

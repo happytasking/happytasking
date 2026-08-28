@@ -34,7 +34,29 @@ stored as null, never $0 and never replaced by platform medians.
 explicit parameter rules.
 
 Country codes are not on the row. Location text is parsed conservatively.
-Remote ≠ worldwide. Unspecified eligibility is labeled honestly and included
-in `/taskmatch?country=BR` per Sprint 4.6 Brazil rules.
+Remote ≠ worldwide. Unspecified eligibility is **unknown**, not confirmed
+country eligibility. `/taskmatch?country=BR` defaults to confirmed worldwide
+or explicitly Brazil listings. Unspecified location is opt-in via
+`includeUnspecified=true`. Remote alone never implies Brazil eligibility.
 
 Descriptions are not republished. A short factual summary is stored instead.
+
+## Next-Action resilience
+
+The `fetchRoles` action hash is a public Next.js identifier. It can change on
+any AITraining.jobs deploy.
+
+Happy Tasking does **not** brute-force hashes or call robots-disallowed `/api/`.
+
+Runtime behavior:
+
+1. Use the configured action id, refreshed from public homepage JS when
+   discovery succeeds.
+2. If the flight payload is missing/unreadable (`StaleFetchRolesActionError`),
+   rediscover once from the public marketing chunk and retry.
+3. If rediscovery fails, or a full fetch returns zero listings, throw
+   `SourceDegradedError`. Source health becomes `DEGRADED`. Existing
+   opportunities are preserved. Lifecycle stale/close is skipped.
+
+A dedicated authorized JSON or feed endpoint remains the preferred long-term
+integration. This adapter is a legal/public fallback until that exists.

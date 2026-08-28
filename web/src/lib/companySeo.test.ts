@@ -25,6 +25,27 @@ const realInput = {
   complaints: 0,
 };
 
+function testConvertedCompanyDoesNotIndexFromDemoReviewCounts() {
+  const realOnly = companySEOEligibility({
+    ...realInput,
+    reviews: 0,
+    payReports: 0,
+    availabilityReports: 0,
+    opportunities: 363,
+  });
+  assert.equal(realOnly.indexable, true);
+  const stillDemo = companySEOEligibility({
+    ...realInput,
+    isDemo: true,
+    reviews: 12,
+    payReports: 8,
+    availabilityReports: 20,
+    opportunities: 363,
+  });
+  assert.equal(stillDemo.indexable, false);
+  assert.ok(stillDemo.reasons.includes("DEMO_ONLY"));
+}
+
 function testDemoRemainsNoindex() {
   const result = companySEOEligibility({ ...realInput, isDemo: true });
   assert.equal(result.indexable, false);
@@ -134,6 +155,7 @@ function testEligibilityDeterministic() {
 }
 
 testDemoRemainsNoindex();
+testConvertedCompanyDoesNotIndexFromDemoReviewCounts();
 testRealEligibleIsIndexableAndSitemap();
 testTitleIsCompanySpecific();
 testCanonicalAndOgAreCompanySpecific();
